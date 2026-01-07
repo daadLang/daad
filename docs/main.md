@@ -38,8 +38,8 @@
 
 ### File extension
 
-- `.jeem` or `.jm`
-
+- `.jeem` , `.jm` or `.ج`
+ 
 ---
 
 ## Example Code
