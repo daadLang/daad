@@ -135,7 +135,7 @@ func (l *Lexer) NextToken() Token {
 		simplified := l.simplifyKeyword([]int32(value))
 		if _, ok := keywords[simplified]; ok {
 
-			return Token{Type: keywords[simplified], Value: simplified}
+			return Token{Type: keywords[simplified], Value: value}
 		}
 		return Token{Type: IDENT, Value: value}
 	}
