@@ -111,40 +111,62 @@ func (l *Lexer) NextToken() Token {
 	}
 
 	switch r {
+	// Arithmetic operators
 	case '+':
-		l.advance()
+		next := l.advance()
+		if next == '=' {
+			l.advance()
+			return Token{Type: PLUS_ASSIGN, Value: "+="}
+		}
 		return Token{Type: PLUS, Value: "+"}
 	case '-':
-		l.advance()
+		next := l.advance()
+		if next == '=' {
+			l.advance()
+			return Token{Type: MINUS_ASSIGN, Value: "-="}
+		}
 		return Token{Type: MINUS, Value: "-"}
 	case '*':
-		l.advance()
+		next := l.advance()
+		if next == '*' {
+			l.advance()
+			if l.peek() == '=' {
+				l.advance()
+				return Token{Type: POWER_ASSIGN, Value: "**="}
+			}
+			return Token{Type: POWER, Value: "**"}
+		}
+		if next == '=' {
+			l.advance()
+			return Token{Type: MULT_ASSIGN, Value: "*="}
+		}
 		return Token{Type: MULT, Value: "*"}
 	case '/':
-		l.advance()
+		next := l.advance()
+		if next == '/' {
+			l.advance()
+			return Token{Type: FLOORDIV, Value: "//"}
+		}
+		if next == '=' {
+			l.advance()
+			return Token{Type: DIVIDE_ASSIGN, Value: "/="}
+		}
 		return Token{Type: DIVIDE, Value: "/"}
-	case '^':
-		l.advance()
-		return Token{Type: POWER, Value: "^"}
 	case '%':
-		l.advance()
+		next := l.advance()
+		if next == '=' {
+			l.advance()
+			return Token{Type: MOD_ASSIGN, Value: "%="}
+		}
 		return Token{Type: MOD, Value: "%"}
-	case '(':
-		l.advance()
-		return Token{Type: LPAREN, Value: "("}
-	case ')':
-		l.advance()
-		return Token{Type: RPAREN, Value: ")"}
-	case ':':
-		l.advance()
-		return Token{Type: COLON, Value: ":"}
+
+	// Comparison operators
 	case '=':
 		next := l.advance()
 		if next == '=' {
 			l.advance()
 			return Token{Type: EQ, Value: "=="}
 		}
-		l.goback()
 		return Token{Type: ASSIGN, Value: "="}
 	case '!':
 		next := l.advance()
@@ -153,10 +175,77 @@ func (l *Lexer) NextToken() Token {
 			return Token{Type: NEQ, Value: "!="}
 		}
 		return Token{Type: ILLEGAL, Value: "!"}
+	case '<':
+		next := l.advance()
+		if next == '=' {
+			l.advance()
+			return Token{Type: LEQ, Value: "<="}
+		}
+		if next == '<' {
+			l.advance()
+			return Token{Type: LSHIFT, Value: "<<"}
+		}
+		return Token{Type: LESS, Value: "<"}
+	case '>':
+		next := l.advance()
+		if next == '=' {
+			l.advance()
+			return Token{Type: GEQ, Value: ">="}
+		}
+		if next == '>' {
+			l.advance()
+			return Token{Type: RSHIFT, Value: ">>"}
+		}
+		return Token{Type: GREATER, Value: ">"}
+
+	// Bitwise operators
+	case '&':
+		l.advance()
+		return Token{Type: BITWISE_AND, Value: "&"}
+	case '|':
+		l.advance()
+		return Token{Type: BITWISE_OR, Value: "|"}
+	case '^':
+		l.advance()
+		return Token{Type: BITWISE_XOR, Value: "^"}
+	case '~':
+		l.advance()
+		return Token{Type: BITWISE_NOT, Value: "~"}
+
+	// Delimiters
+	case '(':
+		l.advance()
+		return Token{Type: LPAREN, Value: "("}
+	case ')':
+		l.advance()
+		return Token{Type: RPAREN, Value: ")"}
+	case '[':
+		l.advance()
+		return Token{Type: LBRACKET, Value: "["}
+	case ']':
+		l.advance()
+		return Token{Type: RBRACKET, Value: "]"}
+	case '{':
+		l.advance()
+		return Token{Type: LBRACE, Value: "{"}
+	case '}':
+		l.advance()
+		return Token{Type: RBRACE, Value: "}"}
+	case ',':
+		l.advance()
+		return Token{Type: COMMA, Value: ","}
+	case '.':
+		l.advance()
+		return Token{Type: DOT, Value: "."}
+	case ':':
+		l.advance()
+		return Token{Type: COLON, Value: ":"}
+	case ';':
+		l.advance()
+		return Token{Type: SEMICOLON, Value: ";"}
 	case '\n':
 		l.advance()
 		return Token{Type: NEWLINE, Value: "\n"}
-
 	}
 
 	l.advance()
