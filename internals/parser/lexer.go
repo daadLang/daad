@@ -40,7 +40,6 @@ func (l *Lexer) readIdentifier() string {
 	return string(l.input[start:l.pos])
 }
 
-// TODO : complete this69
 func (l *Lexer) readString() string {
 	start := l.pos
 	str_delimiter := l.peek()
@@ -114,6 +113,16 @@ func (l *Lexer) readNumber() string {
 	return string(l.input[start:l.pos])
 }
 
+// أ,إو ...  to ا
+func (l *Lexer) simplifyKeyword(keyword []int32) string {
+	for index, char := range keyword {
+		if char == 'أ' || char == 'إ' || char == 'ؤ' || char == 'ء' || char == 'ى' {
+			keyword[index] = 'ا'
+		}
+	}
+	return string(keyword)
+}
+
 func (l *Lexer) NextToken() Token {
 	l.skipWhitespace()
 	r := l.peek()
@@ -123,8 +132,10 @@ func (l *Lexer) NextToken() Token {
 
 	if unicode.IsLetter(r) {
 		value := l.readIdentifier()
-		if _, ok := keywords[value]; ok {
-			return Token{Type: keywords[value], Value: value}
+		simplified := l.simplifyKeyword([]int32(value))
+		if _, ok := keywords[simplified]; ok {
+
+			return Token{Type: keywords[simplified], Value: simplified}
 		}
 		return Token{Type: IDENT, Value: value}
 	}

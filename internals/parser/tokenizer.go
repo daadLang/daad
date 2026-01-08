@@ -90,14 +90,16 @@ const (
 	FALSE TokenType = "FALSE" // خطأ
 )
 
+// Keywords map - simplified forms (after normalization by simplifyKeyword)
+// أ,إ,ؤ,ء,ى are normalized to ا
 var keywords = map[string]TokenType{
-	"إذا": IF,
+	"اذا": IF, // إذا → اذا
 	"لو":  IF,
 
-	"وإذا": ELIF,
+	"واذا": ELIF, // وإذا → واذا
 	"ولو":  ELIF,
 
-	"وإلا": ELSE,
+	"والا": ELSE, // وإلا → والا
 
 	"طالما": WHILE,
 	"مادام": WHILE,
@@ -105,18 +107,17 @@ var keywords = map[string]TokenType{
 	"لكل": FOR,
 	"في":  IN,
 
-	//? new feature: reapeat N times equivalent to for _ in range(N)
-	"كرر":  REPEAT, // new feature
-	"مرات": TIMES,  // new feature
+	"كرر":  REPEAT, // repeat N times
+	"مرات": TIMES,
 
-	"أرجع": RETURN,
+	"ارجع": RETURN, // أرجع → ارجع
 	"دالة": FUNC,
 	"اخرج": BREAK,
 	"تابع": CONTINUE,
 	"صحيح": TRUE,
-	"خطأ":  FALSE,
+	"خطا":  FALSE, // خطأ → خطا
 	"و":    AND,
-	"أو":   OR,
+	"او":   OR, // أو → او
 
 	"ليس": NOT,
 	"لا":  NOT,
