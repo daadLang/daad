@@ -21,12 +21,6 @@ func (l *Lexer) advance() int32 {
 	return r
 }
 
-func (l *Lexer) goback() int32 {
-	r := l.peek()
-	l.pos++
-	return r
-}
-
 func (l *Lexer) skipWhitespace() {
 	for unicode.IsSpace(l.peek()) {
 		l.advance()
@@ -49,23 +43,53 @@ func (l *Lexer) readIdentifier() string {
 // TODO : complete this69
 func (l *Lexer) readString() string {
 	start := l.pos
-	str_delemiter := l.peek()
-	next := l.advance() // ? the first "
-	// multi line string
-	if next == str_delemiter {
-		next := l.advance()
-		if next == str_delemiter {
-			return l.readMultiLineString()
+	str_delimiter := l.peek()
+	l.advance() // skip the first one
+
+	// Read multiline string
+	if l.peek() == str_delimiter {
+		l.advance() // skip 2
+		if l.peek() == str_delimiter {
+			l.advance() // skip 3
+			for {
+				r := l.peek()
+				if r == 0 { // EOF ?
+					break
+				}
+				if r == str_delimiter {
+					l.advance()
+					if l.peek() == str_delimiter {
+						l.advance()
+						if l.peek() == str_delimiter {
+							l.advance()
+							break
+						}
+					}
+				} else {
+					l.advance()
+				}
+			}
+			return string(l.input[start:l.pos])
 		}
-		return string(str_delemiter) + string(str_delemiter)
+		// Empty string: "" or ''
+		return string(str_delimiter) + string(str_delimiter)
 	}
 
-	// one line string
+	// read until """ (or ''')
 	for {
 		r := l.peek()
-		if r == str_delemiter {
+		if r == 0 { // EOF
+			break
+		}
+		if r == str_delimiter {
 			l.advance()
 			break
+		}
+		if r == '\\' {
+			l.advance()
+			if l.peek() != 0 {
+				l.advance()
+			}
 		} else {
 			l.advance()
 		}
@@ -73,15 +97,19 @@ func (l *Lexer) readString() string {
 	return string(l.input[start:l.pos])
 }
 
-// TODO:
-func (l *Lexer) readMultiLineString() string {
-	return ""
-}
-
 func (l *Lexer) readNumber() string {
 	start := l.pos
-	for unicode.IsDigit(l.peek()) {
-		l.advance()
+	decimalPointSeen := false
+	for {
+		peek := l.peek()
+		if unicode.IsDigit(peek) {
+			l.advance()
+		} else if peek == '.' && !decimalPointSeen {
+			decimalPointSeen = true
+			l.advance()
+		} else {
+			break
+		}
 	}
 	return string(l.input[start:l.pos])
 }
@@ -113,22 +141,26 @@ func (l *Lexer) NextToken() Token {
 	switch r {
 	// Arithmetic operators
 	case '+':
-		next := l.advance()
-		if next == '=' {
+		l.advance()
+		if l.peek() == '=' {
 			l.advance()
 			return Token{Type: PLUS_ASSIGN, Value: "+="}
 		}
 		return Token{Type: PLUS, Value: "+"}
 	case '-':
-		next := l.advance()
-		if next == '=' {
+		l.advance()
+		if l.peek() == '=' {
 			l.advance()
 			return Token{Type: MINUS_ASSIGN, Value: "-="}
 		}
+		if l.peek() == '>' {
+			l.advance()
+			return Token{Type: RETTYPE, Value: "->"}
+		}
 		return Token{Type: MINUS, Value: "-"}
 	case '*':
-		next := l.advance()
-		if next == '*' {
+		l.advance()
+		if l.peek() == '*' {
 			l.advance()
 			if l.peek() == '=' {
 				l.advance()
@@ -136,25 +168,25 @@ func (l *Lexer) NextToken() Token {
 			}
 			return Token{Type: POWER, Value: "**"}
 		}
-		if next == '=' {
+		if l.peek() == '=' {
 			l.advance()
 			return Token{Type: MULT_ASSIGN, Value: "*="}
 		}
 		return Token{Type: MULT, Value: "*"}
 	case '/':
-		next := l.advance()
-		if next == '/' {
+		l.advance()
+		if l.peek() == '/' {
 			l.advance()
 			return Token{Type: FLOORDIV, Value: "//"}
 		}
-		if next == '=' {
+		if l.peek() == '=' {
 			l.advance()
 			return Token{Type: DIVIDE_ASSIGN, Value: "/="}
 		}
 		return Token{Type: DIVIDE, Value: "/"}
 	case '%':
-		next := l.advance()
-		if next == '=' {
+		l.advance()
+		if l.peek() == '=' {
 			l.advance()
 			return Token{Type: MOD_ASSIGN, Value: "%="}
 		}
@@ -162,37 +194,37 @@ func (l *Lexer) NextToken() Token {
 
 	// Comparison operators
 	case '=':
-		next := l.advance()
-		if next == '=' {
+		l.advance()
+		if l.peek() == '=' {
 			l.advance()
 			return Token{Type: EQ, Value: "=="}
 		}
 		return Token{Type: ASSIGN, Value: "="}
 	case '!':
-		next := l.advance()
-		if next == '=' {
+		l.advance()
+		if l.peek() == '=' {
 			l.advance()
 			return Token{Type: NEQ, Value: "!="}
 		}
 		return Token{Type: ILLEGAL, Value: "!"}
 	case '<':
-		next := l.advance()
-		if next == '=' {
+		l.advance()
+		if l.peek() == '=' {
 			l.advance()
 			return Token{Type: LEQ, Value: "<="}
 		}
-		if next == '<' {
+		if l.peek() == '<' {
 			l.advance()
 			return Token{Type: LSHIFT, Value: "<<"}
 		}
 		return Token{Type: LESS, Value: "<"}
 	case '>':
-		next := l.advance()
-		if next == '=' {
+		l.advance()
+		if l.peek() == '=' {
 			l.advance()
 			return Token{Type: GEQ, Value: ">="}
 		}
-		if next == '>' {
+		if l.peek() == '>' {
 			l.advance()
 			return Token{Type: RSHIFT, Value: ">>"}
 		}

@@ -83,6 +83,7 @@ const (
 	DOT       TokenType = "DOT"       // .
 	COLON     TokenType = "COLON"     // :
 	SEMICOLON TokenType = "SEMICOLON" // ;
+	RETTYPE   TokenType = "RETTYPE"   // ->
 
 	// Boolean literals
 	TRUE  TokenType = "TRUE"  // صحيح
