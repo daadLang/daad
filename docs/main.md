@@ -1,9 +1,15 @@
 
-# Jeem Language Notes
+# Daad Language Notes
+
+## About the Name
+
+**Daad** (ض - Ḍād) is named after the letter **ض**, which is unique to the Arabic alphabet. The Arabic language is traditionally called "لغة الضاد" (the language of Ḍād), symbolizing its distinctiveness. This name honors Arabic's linguistic heritage.
+
+> **Note:** For simplicity in typing and documentation, we write "Daad" in Latin script, but the official symbol is **ض**.
 
 ## Overview
 
-- Jeem is an **interpreted Arabic programming language**.
+- Daad is an **interpreted Arabic programming language**.
 - It will be **Python-style**, dynamically typed, and beginner-friendly.
 - Version 1 (v1) will be **simple and minimal**, focusing on core concepts.
 
@@ -38,7 +44,7 @@
 
 ### File extension
 
-- `.jeem` , `.jm` or `.ج`
+- `.daad` , `.dad` or `.ض`
  
 ---
 
@@ -46,7 +52,7 @@
 
 ### Function & While Loop
 
-```jeem
+```daad
 دالة تحقق(عدد):
     إذا عدد % 2 == 0:
         أرجع "زوجي"
@@ -61,7 +67,7 @@
 
 ### Conditional Example
 
-```jeem
+```daad
 إذا درجة >= 90:
     اطبع("ممتاز")
 وإذا درجة >= 75:
@@ -74,7 +80,7 @@
 
 ### For Loop Example
 
-```jeem
+```daad
 أسماء = ["علي", "أحمد"]
 
 لكل اسم في أسماء:
@@ -83,25 +89,25 @@
 
 ### Repeat Loop Example (syntactic sugar)
 
-```jeem
+```daad
 كرر 5 مرات:
     اطبع("مرحبا")
 ```
 
 Equivalent to:
 
-```jeem
+```daad
 لكل _ في مدى(5):
     اطبع("مرحبا")
 ```
 
 ---
 
-## Jeem Keyword Table
+## Daad Keyword Table
 
 ### Control Flow
 
-| Concept  | Jeem (Arabic) |
+| Concept  | Daad (Arabic) |
 | -------- | ------------- |
 | if       | إذا           |
 | elif     | وإذا          |
@@ -115,27 +121,27 @@ Equivalent to:
 
 ### Functions
 
-| Concept  | Jeem |
+| Concept  | Daad |
 | -------- | ---- |
 | function | دالة |
 
 ### Boolean Values
 
-| Concept | Jeem |
+| Concept | Daad |
 | ------- | ---- |
 | true    | صحيح |
 | false   | خطأ  |
 
 ### Built-in Operations (Initial)
 
-| Concept | Jeem |
+| Concept | Daad |
 | ------- | ---- |
 | print   | اطبع |
 | range   | مدى  |
 
 ### Optional / Future Keywords
 
-| Concept | Jeem   | Notes              |
+| Concept | Daad   | Notes              |
 | ------- | ------ | ------------------ |
 | and     | و      | Logical AND        |
 | or      | أو     | Logical OR         |
@@ -145,7 +151,7 @@ Equivalent to:
 
 ### Exception Handling
 
-| English | Jeem (Arabic) | Notes                                     |
+| English | Daad (Arabic) | Notes                                     |
 | ------- | ------------- | ----------------------------------------- |
 | try     | حاول          | Simple and intuitive                      |
 | except  | باستثناء      | Can optionally capture exception variable |
@@ -155,7 +161,7 @@ Equivalent to:
 
 ## Example Using Many Keywords
 
-```jeem
+```daad
 دالة تحقق(عدد):
     إذا عدد > 0:
         أرجع صحيح
