@@ -1,5 +1,10 @@
 package parser
 
+import (
+	"bufio"
+	"os"
+)
+
 type Token struct {
 	Type  TokenType
 	Value string
@@ -121,4 +126,31 @@ var keywords = map[string]TokenType{
 
 	"ليس": NOT,
 	"لا":  NOT,
+}
+
+func Tokenize(filePath string) ([]Token, error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	reader := bufio.NewReader(file)
+
+	lexer := &Lexer{
+		reader:  reader,
+		hasChar: false,
+		buffer:  make([]rune, 0, 256),
+		Tokens:  []Token{},
+	}
+
+	for {
+		tok := lexer.NextToken()
+		lexer.Tokens = append(lexer.Tokens, tok)
+		if tok.Type == EOF {
+			break
+		}
+	}
+
+	return lexer.Tokens, nil
 }

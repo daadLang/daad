@@ -1,24 +1,46 @@
 package parser
 
-import "unicode"
+import (
+	"bufio"
+	"unicode"
+)
 
+// ? rune is int32 representing a Unicode code char
 type Lexer struct {
-	input  []int32
-	pos    int
-	Tokens []Token
+	reader      *bufio.Reader
+	currentChar rune
+	hasChar     bool
+	buffer      []rune
+	Tokens      []Token
 }
 
-func (l *Lexer) peek() int32 {
-	if l.pos >= len(l.input) {
-		return 0
+func (l *Lexer) peek() rune {
+	if !l.hasChar {
+		r, _, err := l.reader.ReadRune()
+		if err != nil {
+			return 0
+		}
+		l.currentChar = r
+		l.hasChar = true
 	}
-	return l.input[l.pos]
+	return l.currentChar
 }
 
-func (l *Lexer) advance() int32 {
+func (l *Lexer) advance() rune {
 	r := l.peek()
-	l.pos++
+	if r != 0 {
+		l.buffer = append(l.buffer, r)
+		l.hasChar = false
+	}
 	return r
+}
+
+func (l *Lexer) clearBuffer() {
+	l.buffer = l.buffer[:0]
+}
+
+func (l *Lexer) getBuffer() string {
+	return string(l.buffer)
 }
 
 func (l *Lexer) skipWhitespace() {
@@ -28,7 +50,7 @@ func (l *Lexer) skipWhitespace() {
 }
 
 func (l *Lexer) readIdentifier() string {
-	start := l.pos
+	l.clearBuffer()
 	for {
 		r := l.peek()
 		if unicode.IsLetter(r) || unicode.IsDigit(r) || r == '_' {
@@ -37,11 +59,11 @@ func (l *Lexer) readIdentifier() string {
 			break
 		}
 	}
-	return string(l.input[start:l.pos])
+	return l.getBuffer()
 }
 
 func (l *Lexer) readString() string {
-	start := l.pos
+	l.clearBuffer()
 	str_delimiter := l.peek()
 	l.advance() // skip the first one
 
@@ -68,7 +90,7 @@ func (l *Lexer) readString() string {
 					l.advance()
 				}
 			}
-			return string(l.input[start:l.pos])
+			return l.getBuffer()
 		}
 		// Empty string: "" or ''
 		return string(str_delimiter) + string(str_delimiter)
@@ -93,11 +115,11 @@ func (l *Lexer) readString() string {
 			l.advance()
 		}
 	}
-	return string(l.input[start:l.pos])
+	return l.getBuffer()
 }
 
 func (l *Lexer) readNumber() string {
-	start := l.pos
+	l.clearBuffer()
 	decimalPointSeen := false
 	for {
 		peek := l.peek()
@@ -110,11 +132,11 @@ func (l *Lexer) readNumber() string {
 			break
 		}
 	}
-	return string(l.input[start:l.pos])
+	return l.getBuffer()
 }
 
 // أ,إو ...  to ا
-func (l *Lexer) simplifyKeyword(keyword []int32) string {
+func (l *Lexer) simplifyKeyword(keyword []rune) string {
 	for index, char := range keyword {
 		if char == 'أ' || char == 'إ' || char == 'ؤ' || char == 'ء' || char == 'ى' {
 			keyword[index] = 'ا'
@@ -132,7 +154,7 @@ func (l *Lexer) NextToken() Token {
 
 	if unicode.IsLetter(r) {
 		value := l.readIdentifier()
-		simplified := l.simplifyKeyword([]int32(value))
+		simplified := l.simplifyKeyword([]rune(value))
 		if _, ok := keywords[simplified]; ok {
 
 			return Token{Type: keywords[simplified], Value: value}
@@ -293,15 +315,4 @@ func (l *Lexer) NextToken() Token {
 
 	l.advance()
 	return Token{Type: ILLEGAL, Value: string(r)}
-}
-
-func (l *Lexer) Tokenize() []Token {
-	for {
-		tok := l.NextToken()
-		l.Tokens = append(l.Tokens, tok)
-		if tok.Type == EOF {
-			break
-		}
-	}
-	return l.Tokens
 }
