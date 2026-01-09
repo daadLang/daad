@@ -11,7 +11,23 @@ type Lexer struct {
 	currentChar rune
 	hasChar     bool
 	buffer      []rune
+	spacesCount int
+	openBraces  int // we need to track any type of open braces `({[` to handle spaces , (in case of openBraces > 0 we ignore spaces and newlines)
+	isNewLine   bool
 	Tokens      []Token
+}
+
+func NewLexer(r *bufio.Reader) *Lexer {
+	return &Lexer{
+		reader:      r,
+		currentChar: 0,
+		hasChar:     false,
+		buffer:      make([]rune, 0, 64),
+		spacesCount: 0,
+		openBraces:  0,
+		isNewLine:   true,
+		Tokens:      make([]Token, 0),
+	}
 }
 
 func (l *Lexer) peek() rune {
@@ -49,7 +65,60 @@ func (l *Lexer) skipWhitespace() {
 	}
 }
 
-func (l *Lexer) readIdentifier() string {
+// this function will replace skipWhitespace
+func (l *Lexer) handleSpaces() (Token, int) {
+	if l.openBraces > 0 {
+		l.skipWhitespace()
+		return Token{}, 0
+	} else {
+		if l.isNewLine {
+			for {
+				peek := l.peek()
+				if peek == ' ' {
+					l.spacesCount++
+					l.advance()
+				} else if peek == '\t' {
+					l.spacesCount += 4
+					l.advance()
+				} else if peek == '\n' || peek == '\r' {
+					// skip in case of empty line e.g `     \n`
+					l.spacesCount = 0
+					l.advance()
+					// stay in isNewLine state and continue to next line
+					continue
+				} else {
+					l.isNewLine = false
+					if l.spacesCount > 0 {
+						spaces := make([]rune, l.spacesCount)
+						for i := range spaces {
+							spaces[i] = ' '
+						}
+						return Token{Type: NAME, Value: string(spaces)}, 1
+					}
+					break
+				}
+			}
+		} else {
+			for {
+				peek := l.peek()
+				if peek == ' ' || peek == '\t' {
+					l.advance()
+				} else if peek == '\n' || peek == '\r' {
+					l.isNewLine = true
+					l.advance()
+					return Token{Type: NEWLINE, Value: "\n"}, 1
+				} else {
+					break
+				}
+			}
+		}
+
+	}
+	return Token{}, 0
+
+}
+
+func (l *Lexer) readName() string {
 	l.clearBuffer()
 	for {
 		r := l.peek()
@@ -118,6 +187,22 @@ func (l *Lexer) readString() string {
 	return l.getBuffer()
 }
 
+func (l *Lexer) readComment() string {
+	l.clearBuffer()
+	for {
+		r := l.peek()
+		if r == 0 || r == '\n' || r == '\r' {
+			// Consume the newline at the end of the comment
+			if r == '\n' || r == '\r' {
+				l.advance()
+			}
+			break
+		}
+		l.advance()
+	}
+	return l.getBuffer()
+}
+
 func (l *Lexer) readNumber() string {
 	l.clearBuffer()
 	decimalPointSeen := false
@@ -146,20 +231,24 @@ func (l *Lexer) simplifyKeyword(keyword []rune) string {
 }
 
 func (l *Lexer) NextToken() Token {
-	l.skipWhitespace()
+	tok, handled := l.handleSpaces()
+	if handled > 0 {
+		l.spacesCount = 0
+		return tok
+	}
 	r := l.peek()
 	if r == 0 {
 		return Token{Type: EOF, Value: ""}
 	}
 
 	if unicode.IsLetter(r) {
-		value := l.readIdentifier()
+		value := l.readName()
 		simplified := l.simplifyKeyword([]rune(value))
 		if _, ok := keywords[simplified]; ok {
 
 			return Token{Type: keywords[simplified], Value: value}
 		}
-		return Token{Type: IDENT, Value: value}
+		return Token{Type: NAME, Value: value}
 	}
 
 	if unicode.IsDigit(r) {
@@ -280,21 +369,27 @@ func (l *Lexer) NextToken() Token {
 	// Delimiters
 	case '(':
 		l.advance()
+		l.openBraces++
 		return Token{Type: LPAREN, Value: "("}
 	case ')':
 		l.advance()
+		l.openBraces--
 		return Token{Type: RPAREN, Value: ")"}
 	case '[':
 		l.advance()
+		l.openBraces++
 		return Token{Type: LBRACKET, Value: "["}
 	case ']':
 		l.advance()
+		l.openBraces--
 		return Token{Type: RBRACKET, Value: "]"}
 	case '{':
 		l.advance()
+		l.openBraces++
 		return Token{Type: LBRACE, Value: "{"}
 	case '}':
 		l.advance()
+		l.openBraces--
 		return Token{Type: RBRACE, Value: "}"}
 	case ',':
 		l.advance()
@@ -308,9 +403,10 @@ func (l *Lexer) NextToken() Token {
 	case ';':
 		l.advance()
 		return Token{Type: SEMICOLON, Value: ";"}
-	case '\n':
-		l.advance()
-		return Token{Type: NEWLINE, Value: "\n"}
+	case '#':
+		comment := l.readComment()
+		l.isNewLine = true
+		return Token{Type: COMMENT, Value: comment}
 	}
 
 	l.advance()

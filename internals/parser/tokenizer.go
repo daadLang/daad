@@ -18,9 +18,13 @@ const (
 	NEWLINE TokenType = "NEWLINE"
 
 	// Literals
-	IDENT  TokenType = "IDENT"
-	NUMBER TokenType = "NUMBER"
-	STRING TokenType = "STRING"
+	NAME    TokenType = "NAME"
+	NUMBER  TokenType = "NUMBER"
+	STRING  TokenType = "STRING"
+	COMMENT TokenType = "COMMENT"
+
+	INDENT TokenType = "INDENT"
+	DEDENT TokenType = "DEDENT"
 
 	// Keywords
 	IF       TokenType = "IF"

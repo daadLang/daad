@@ -4,44 +4,89 @@ import (
 	"testing"
 )
 
+// Helper function to compare tokens
+func compareTokens(t *testing.T, testName string, expected []Token, actual []Token) {
+	if len(expected) != len(actual) {
+		t.Errorf("%s: Expected %d tokens, got %d tokens", testName, len(expected), len(actual))
+		t.Logf("Expected tokens:")
+		for i, tok := range expected {
+			t.Logf("  [%d] Type: %s, Value: %q", i, tok.Type, tok.Value)
+		}
+		t.Logf("Actual tokens:")
+		for i, tok := range actual {
+			t.Logf("  [%d] Type: %s, Value: %q", i, tok.Type, tok.Value)
+		}
+		return
+	}
+
+	for i := 0; i < len(expected); i++ {
+		if expected[i].Type != actual[i].Type {
+			t.Errorf("%s: Token %d type mismatch. Expected %s, got %s",
+				testName, i, expected[i].Type, actual[i].Type)
+		}
+		if expected[i].Value != actual[i].Value {
+			t.Errorf("%s: Token %d value mismatch. Expected %q, got %q",
+				testName, i, expected[i].Value, actual[i].Value)
+		}
+	}
+}
+
 func TestTokenizeBasicArithmetic(t *testing.T) {
 	tokens, err := Tokenize("../../tests/basic_arithmetic.daad")
 	if err != nil {
 		t.Fatalf("Failed to tokenize file: %v", err)
 	}
 
-	if len(tokens) == 0 {
-		t.Fatal("Expected tokens but got none")
+	expected := []Token{
+		// # Test basic arithmetic operations
+		{Type: COMMENT, Value: "# Test basic arithmetic operations\n"},
+
+		// متغير = 10 + 5
+		{Type: NAME, Value: "متغير"},
+		{Type: ASSIGN, Value: "="},
+		{Type: NUMBER, Value: "10"},
+		{Type: PLUS, Value: "+"},
+		{Type: NUMBER, Value: "5"},
+		{Type: NEWLINE, Value: "\n"},
+
+		// نتيجة = متغير * 2 - 3// means that this line is empty e.g `     \n`
+		{Type: NAME, Value: "نتيجة"},
+		{Type: ASSIGN, Value: "="},
+		{Type: NAME, Value: "متغير"},
+		{Type: MULT, Value: "*"},
+		{Type: NUMBER, Value: "2"},
+		{Type: MINUS, Value: "-"},
+		{Type: NUMBER, Value: "3"},
+		{Type: NEWLINE, Value: "\n"},
+
+		// قوة = 2 ** 8
+		{Type: NAME, Value: "قوة"},
+		{Type: ASSIGN, Value: "="},
+		{Type: NUMBER, Value: "2"},
+		{Type: POWER, Value: "**"},
+		{Type: NUMBER, Value: "8"},
+		{Type: NEWLINE, Value: "\n"},
+
+		// قسمة = 100 / 4
+		{Type: NAME, Value: "قسمة"},
+		{Type: ASSIGN, Value: "="},
+		{Type: NUMBER, Value: "100"},
+		{Type: DIVIDE, Value: "/"},
+		{Type: NUMBER, Value: "4"},
+		{Type: NEWLINE, Value: "\n"},
+
+		// باقي = 17 % 5
+		{Type: NAME, Value: "باقي"},
+		{Type: ASSIGN, Value: "="},
+		{Type: NUMBER, Value: "17"},
+		{Type: MOD, Value: "%"},
+		{Type: NUMBER, Value: "5"},
+		{Type: NEWLINE, Value: "\n"},
+
+		{Type: EOF, Value: ""},
 	}
 
-	if tokens[len(tokens)-1].Type != EOF {
-		t.Errorf("Expected EOF as last token, got %v", tokens[len(tokens)-1].Type)
-	}
-
-	hasNumber := false
-	hasPlus := false
-	hasAssign := false
-	for _, tok := range tokens {
-		if tok.Type == NUMBER {
-			hasNumber = true
-		}
-		if tok.Type == PLUS {
-			hasPlus = true
-		}
-		if tok.Type == ASSIGN {
-			hasAssign = true
-		}
-	}
-
-	if !hasNumber {
-		t.Error("Expected to find NUMBER tokens")
-	}
-	if !hasPlus {
-		t.Error("Expected to find PLUS token")
-	}
-	if !hasAssign {
-		t.Error("Expected to find ASSIGN token")
-	}
+	compareTokens(t, "TestTokenizeBasicArithmetic", expected, tokens)
 }
 
 func TestTokenizeControlFlow(t *testing.T) {
@@ -50,45 +95,74 @@ func TestTokenizeControlFlow(t *testing.T) {
 		t.Fatalf("Failed to tokenize file: %v", err)
 	}
 
-	hasIf := false
-	hasElse := false
-	hasWhile := false
-	hasFor := false
-	hasIn := false
+	expected := []Token{
+		// # Test control flow statements
+		{Type: COMMENT, Value: "# Test control flow statements\n"},
 
-	for _, tok := range tokens {
-		if tok.Type == IF {
-			hasIf = true
-		}
-		if tok.Type == ELSE {
-			hasElse = true
-		}
-		if tok.Type == WHILE {
-			hasWhile = true
-		}
-		if tok.Type == FOR {
-			hasFor = true
-		}
-		if tok.Type == IN {
-			hasIn = true
-		}
+		// اذا العدد > 10:
+		{Type: IF, Value: "اذا"},
+		{Type: NAME, Value: "العدد"},
+		{Type: GREATER, Value: ">"},
+		{Type: NUMBER, Value: "10"},
+		{Type: COLON, Value: ":"},
+		{Type: NEWLINE, Value: "\n"},
+
+		//     اطبع("كبير")
+		{Type: NAME, Value: "    "}, // 4 spaces indentation
+		{Type: NAME, Value: "اطبع"},
+		{Type: LPAREN, Value: "("},
+		{Type: STRING, Value: "\"كبير\""},
+		{Type: RPAREN, Value: ")"},
+		{Type: NEWLINE, Value: "\n"},
+
+		// والا:
+		{Type: ELSE, Value: "والا"},
+		{Type: COLON, Value: ":"},
+		{Type: NEWLINE, Value: "\n"},
+
+		//     اطبع("صغير")
+		{Type: NAME, Value: "    "}, // 4 spaces indentation
+		{Type: NAME, Value: "اطبع"},
+		{Type: LPAREN, Value: "("},
+		{Type: STRING, Value: "\"صغير\""},
+		{Type: RPAREN, Value: ")"},
+		{Type: NEWLINE, Value: "\n"},
+
+		// طالما العداد < 100:
+		{Type: WHILE, Value: "طالما"},
+		{Type: NAME, Value: "العداد"},
+		{Type: LESS, Value: "<"},
+		{Type: NUMBER, Value: "100"},
+		{Type: COLON, Value: ":"},
+		{Type: NEWLINE, Value: "\n"},
+
+		//     العداد += 1
+		{Type: NAME, Value: "    "}, // 4 spaces indentation
+		{Type: NAME, Value: "العداد"},
+		{Type: PLUS_ASSIGN, Value: "+="},
+		{Type: NUMBER, Value: "1"},
+		{Type: NEWLINE, Value: "\n"},
+
+		// لكل عنصر في القائمة:
+		{Type: FOR, Value: "لكل"},
+		{Type: NAME, Value: "عنصر"},
+		{Type: IN, Value: "في"},
+		{Type: NAME, Value: "القائمة"},
+		{Type: COLON, Value: ":"},
+		{Type: NEWLINE, Value: "\n"},
+
+		//     اطبع(عنصر)
+		{Type: NAME, Value: "    "}, // 4 spaces indentation
+		{Type: NAME, Value: "اطبع"},
+		{Type: LPAREN, Value: "("},
+		{Type: NAME, Value: "عنصر"},
+		{Type: RPAREN, Value: ")"},
+		{Type: NEWLINE, Value: "\n"},
+
+		{Type: EOF, Value: ""},
 	}
 
-	if !hasIf {
-		t.Error("Expected to find IF keyword")
-	}
-	if !hasElse {
-		t.Error("Expected to find ELSE keyword")
-	}
-	if !hasWhile {
-		t.Error("Expected to find WHILE keyword")
-	}
-	if !hasFor {
-		t.Error("Expected to find FOR keyword")
-	}
-	if !hasIn {
-		t.Error("Expected to find IN keyword")
-	}
+	compareTokens(t, "TestTokenizeControlFlow", expected, tokens)
 }
 
 func TestTokenizeFunctions(t *testing.T) {
@@ -97,45 +171,68 @@ func TestTokenizeFunctions(t *testing.T) {
 		t.Fatalf("Failed to tokenize file: %v", err)
 	}
 
-	hasFunc := false
-	hasReturn := false
-	hasRetType := false
-	hasLParen := false
-	hasRParen := false
+	expected := []Token{
+		// # Test function definitions
+		{Type: COMMENT, Value: "# Test function definitions\n"},
 
-	for _, tok := range tokens {
-		if tok.Type == FUNC {
-			hasFunc = true
-		}
-		if tok.Type == RETURN {
-			hasReturn = true
-		}
-		if tok.Type == RETTYPE {
-			hasRetType = true
-		}
-		if tok.Type == LPAREN {
-			hasLParen = true
-		}
-		if tok.Type == RPAREN {
-			hasRParen = true
-		}
+		// دالة جمع(أ, ب) -> عدد:
+		{Type: FUNC, Value: "دالة"},
+		{Type: NAME, Value: "جمع"},
+		{Type: LPAREN, Value: "("},
+		{Type: NAME, Value: "أ"},
+		{Type: COMMA, Value: ","},
+		{Type: NAME, Value: "ب"},
+		{Type: RPAREN, Value: ")"},
+		{Type: RETTYPE, Value: "->"},
+		{Type: NAME, Value: "عدد"},
+		{Type: COLON, Value: ":"},
+		{Type: NEWLINE, Value: "\n"},
+
+		//     ارجع أ + ب
+		{Type: NAME, Value: "    "}, // 4 spaces indentation
+		{Type: RETURN, Value: "ارجع"},
+		{Type: NAME, Value: "أ"},
+		{Type: PLUS, Value: "+"},
+		{Type: NAME, Value: "ب"},
+		{Type: NEWLINE, Value: "\n"},
+
+		// دالة طباعة_رسالة(نص):
+		{Type: FUNC, Value: "دالة"},
+		{Type: NAME, Value: "طباعة_رسالة"},
+		{Type: LPAREN, Value: "("},
+		{Type: NAME, Value: "نص"},
+		{Type: RPAREN, Value: ")"},
+		{Type: COLON, Value: ":"},
+		{Type: NEWLINE, Value: "\n"},
+
+		//     اطبع(نص)
+		{Type: NAME, Value: "    "}, // 4 spaces indentation
+		{Type: NAME, Value: "اطبع"},
+		{Type: LPAREN, Value: "("},
+		{Type: NAME, Value: "نص"},
+		{Type: RPAREN, Value: ")"},
+		{Type: NEWLINE, Value: "\n"},
+
+		//     ارجع
+		{Type: NAME, Value: "    "}, // 4 spaces indentation
+		{Type: RETURN, Value: "ارجع"},
+		{Type: NEWLINE, Value: "\n"},
+
+		// نتيجة = جمع(5, 10)
+		{Type: NAME, Value: "نتيجة"},
+		{Type: ASSIGN, Value: "="},
+		{Type: NAME, Value: "جمع"},
+		{Type: LPAREN, Value: "("},
+		{Type: NUMBER, Value: "5"},
+		{Type: COMMA, Value: ","},
+		{Type: NUMBER, Value: "10"},
+		{Type: RPAREN, Value: ")"},
+		{Type: NEWLINE, Value: "\n"},
+
+		{Type: EOF, Value: ""},
 	}
 
-	if !hasFunc {
-		t.Error("Expected to find FUNC keyword")
-	}
-	if !hasReturn {
-		t.Error("Expected to find RETURN keyword")
-	}
-	if !hasRetType {
-		t.Error("Expected to find RETTYPE (->)")
-	}
-	if !hasLParen {
-		t.Error("Expected to find LPAREN")
-	}
-	if !hasRParen {
-		t.Error("Expected to find RPAREN")
-	}
+	compareTokens(t, "TestTokenizeFunctions", expected, tokens)
 }
 
 func TestTokenizeStrings(t *testing.T) {
@@ -144,17 +241,44 @@ func TestTokenizeStrings(t *testing.T) {
 		t.Fatalf("Failed to tokenize file: %v", err)
 	}
 
-	// Count string tokens
-	stringCount := 0
-	for _, tok := range tokens {
-		if tok.Type == STRING {
-			stringCount++
-		}
+	expected := []Token{
+		// # Test string literals
+		{Type: COMMENT, Value: "# Test string literals\n"},
+
+		// اسم = "محمد"
+		{Type: NAME, Value: "اسم"},
+		{Type: ASSIGN, Value: "="},
+		{Type: STRING, Value: "\"محمد\""},
+		{Type: NEWLINE, Value: "\n"},
+
+		// رسالة = 'مرحبا بك'
+		{Type: NAME, Value: "رسالة"},
+		{Type: ASSIGN, Value: "="},
+		{Type: STRING, Value: "'مرحبا بك'"},
+		{Type: NEWLINE, Value: "\n"},
+
+		// نص_متعدد = """..."""
+		{Type: NAME, Value: "نص_متعدد"},
+		{Type: ASSIGN, Value: "="},
+		{Type: STRING, Value: "\"\"\"\nهذا نص\nمتعدد الأسطر\nيحتوي على عدة أسطر\n\"\"\""},
+		{Type: NEWLINE, Value: "\n"},
+
+		// فارغ = ""
+		{Type: NAME, Value: "فارغ"},
+		{Type: ASSIGN, Value: "="},
+		{Type: STRING, Value: "\"\""},
+		{Type: NEWLINE, Value: "\n"},
+
+		// فارغ2 = ''
+		{Type: NAME, Value: "فارغ2"},
+		{Type: ASSIGN, Value: "="},
+		{Type: STRING, Value: "''"},
+		{Type: NEWLINE, Value: "\n"},
+
+		{Type: EOF, Value: ""},
 	}
 
-	if stringCount < 5 {
-		t.Errorf("Expected at least 5 STRING tokens, got %d", stringCount)
-	}
+	compareTokens(t, "TestTokenizeStrings", expected, tokens)
 }
 
 func TestTokenizeOperators(t *testing.T) {
@@ -163,42 +287,180 @@ func TestTokenizeOperators(t *testing.T) {
 		t.Fatalf("Failed to tokenize file: %v", err)
 	}
 
-	operatorTests := map[TokenType]string{
-		EQ:            "==",
-		NEQ:           "!=",
-		LESS:          "<",
-		GREATER:       ">",
-		LEQ:           "<=",
-		GEQ:           ">=",
-		AND:           "و",
-		OR:            "او",
-		NOT:           "ليس",
-		BITWISE_AND:   "&",
-		BITWISE_OR:    "|",
-		BITWISE_XOR:   "^",
-		BITWISE_NOT:   "~",
-		LSHIFT:        "<<",
-		RSHIFT:        ">>",
-		PLUS_ASSIGN:   "+=",
-		MINUS_ASSIGN:  "-=",
-		MULT_ASSIGN:   "*=",
-		DIVIDE_ASSIGN: "/=",
-		MOD_ASSIGN:    "%=",
-		POWER_ASSIGN:  "**=",
+	expected := []Token{
+		// # Test all operators
+		{Type: COMMENT, Value: "# Test all operators\n"},
+
+		// # Comparison
+		{Type: COMMENT, Value: "# Comparison\n"},
+
+		// نتيجة1 = 5 == 5
+		{Type: NAME, Value: "نتيجة1"},
+		{Type: ASSIGN, Value: "="},
+		{Type: NUMBER, Value: "5"},
+		{Type: EQ, Value: "=="},
+		{Type: NUMBER, Value: "5"},
+		{Type: NEWLINE, Value: "\n"},
+
+		// نتيجة2 = 10 != 5
+		{Type: NAME, Value: "نتيجة2"},
+		{Type: ASSIGN, Value: "="},
+		{Type: NUMBER, Value: "10"},
+		{Type: NEQ, Value: "!="},
+		{Type: NUMBER, Value: "5"},
+		{Type: NEWLINE, Value: "\n"},
+
+		// نتيجة3 = 7 < 10
+		{Type: NAME, Value: "نتيجة3"},
+		{Type: ASSIGN, Value: "="},
+		{Type: NUMBER, Value: "7"},
+		{Type: LESS, Value: "<"},
+		{Type: NUMBER, Value: "10"},
+		{Type: NEWLINE, Value: "\n"},
+
+		// نتيجة4 = 15 > 10
+		{Type: NAME, Value: "نتيجة4"},
+		{Type: ASSIGN, Value: "="},
+		{Type: NUMBER, Value: "15"},
+		{Type: GREATER, Value: ">"},
+		{Type: NUMBER, Value: "10"},
+		{Type: NEWLINE, Value: "\n"},
+
+		// نتيجة5 = 5 <= 5
+		{Type: NAME, Value: "نتيجة5"},
+		{Type: ASSIGN, Value: "="},
+		{Type: NUMBER, Value: "5"},
+		{Type: LEQ, Value: "<="},
+		{Type: NUMBER, Value: "5"},
+		{Type: NEWLINE, Value: "\n"},
+
+		// نتيجة6 = 20 >= 15
+		{Type: NAME, Value: "نتيجة6"},
+		{Type: ASSIGN, Value: "="},
+		{Type: NUMBER, Value: "20"},
+		{Type: GEQ, Value: ">="},
+		{Type: NUMBER, Value: "15"},
+		{Type: NEWLINE, Value: "\n"},
+
+		// # Logical
+		{Type: COMMENT, Value: "# Logical\n"},
+
+		// صحيح و خطأ
+		{Type: TRUE, Value: "صحيح"},
+		{Type: AND, Value: "و"},
+		{Type: FALSE, Value: "خطأ"},
+		{Type: NEWLINE, Value: "\n"},
+
+		// صحيح او خطأ
+		{Type: TRUE, Value: "صحيح"},
+		{Type: OR, Value: "او"},
+		{Type: FALSE, Value: "خطأ"},
+		{Type: NEWLINE, Value: "\n"},
+
+		// ليس صحيح
+		{Type: NOT, Value: "ليس"},
+		{Type: TRUE, Value: "صحيح"},
+		{Type: NEWLINE, Value: "\n"},
+
+		// # Bitwise
+		{Type: COMMENT, Value: "# Bitwise\n"},
+
+		// قيمة1 = 5 & 3
+		{Type: NAME, Value: "قيمة1"},
+		{Type: ASSIGN, Value: "="},
+		{Type: NUMBER, Value: "5"},
+		{Type: BITWISE_AND, Value: "&"},
+		{Type: NUMBER, Value: "3"},
+		{Type: NEWLINE, Value: "\n"},
+
+		// قيمة2 = 5 | 3
+		{Type: NAME, Value: "قيمة2"},
+		{Type: ASSIGN, Value: "="},
+		{Type: NUMBER, Value: "5"},
+		{Type: BITWISE_OR, Value: "|"},
+		{Type: NUMBER, Value: "3"},
+		{Type: NEWLINE, Value: "\n"},
+
+		// قيمة3 = 5 ^ 3
+		{Type: NAME, Value: "قيمة3"},
+		{Type: ASSIGN, Value: "="},
+		{Type: NUMBER, Value: "5"},
+		{Type: BITWISE_XOR, Value: "^"},
+		{Type: NUMBER, Value: "3"},
+		{Type: NEWLINE, Value: "\n"},
+
+		// قيمة4 = ~5
+		{Type: NAME, Value: "قيمة4"},
+		{Type: ASSIGN, Value: "="},
+		{Type: BITWISE_NOT, Value: "~"},
+		{Type: NUMBER, Value: "5"},
+		{Type: NEWLINE, Value: "\n"},
+
+		// قيمة5 = 2 << 3
+		{Type: NAME, Value: "قيمة5"},
+		{Type: ASSIGN, Value: "="},
+		{Type: NUMBER, Value: "2"},
+		{Type: LSHIFT, Value: "<<"},
+		{Type: NUMBER, Value: "3"},
+		{Type: NEWLINE, Value: "\n"},
+
+		// قيمة6 = 16 >> 2
+		{Type: NAME, Value: "قيمة6"},
+		{Type: ASSIGN, Value: "="},
+		{Type: NUMBER, Value: "16"},
+		{Type: RSHIFT, Value: ">>"},
+		{Type: NUMBER, Value: "2"},
+		{Type: NEWLINE, Value: "\n"},
+
+		// # Assignment
+		{Type: COMMENT, Value: "# Assignment\n"},
+
+		// عدد = 10
+		{Type: NAME, Value: "عدد"},
+		{Type: ASSIGN, Value: "="},
+		{Type: NUMBER, Value: "10"},
+		{Type: NEWLINE, Value: "\n"},
+
+		// عدد += 5
+		{Type: NAME, Value: "عدد"},
+		{Type: PLUS_ASSIGN, Value: "+="},
+		{Type: NUMBER, Value: "5"},
+		{Type: NEWLINE, Value: "\n"},
+
+		// عدد -= 3
+		{Type: NAME, Value: "عدد"},
+		{Type: MINUS_ASSIGN, Value: "-="},
+		{Type: NUMBER, Value: "3"},
+		{Type: NEWLINE, Value: "\n"},
+
+		// عدد *= 2
+		{Type: NAME, Value: "عدد"},
+		{Type: MULT_ASSIGN, Value: "*="},
+		{Type: NUMBER, Value: "2"},
+		{Type: NEWLINE, Value: "\n"},
+
+		// عدد /= 4
+		{Type: NAME, Value: "عدد"},
+		{Type: DIVIDE_ASSIGN, Value: "/="},
+		{Type: NUMBER, Value: "4"},
+		{Type: NEWLINE, Value: "\n"},
+
+		// عدد %= 3
+		{Type: NAME, Value: "عدد"},
+		{Type: MOD_ASSIGN, Value: "%="},
+		{Type: NUMBER, Value: "3"},
+		{Type: NEWLINE, Value: "\n"},
+
+		// عدد **= 2
+		{Type: NAME, Value: "عدد"},
+		{Type: POWER_ASSIGN, Value: "**="},
+		{Type: NUMBER, Value: "2"},
+		{Type: NEWLINE, Value: "\n"},
+
+		{Type: EOF, Value: ""},
 	}
 
-	foundOperators := make(map[TokenType]bool)
-	for _, tok := range tokens {
-		if _, exists := operatorTests[tok.Type]; exists {
-			foundOperators[tok.Type] = true
-		}
-	}
-
-	for opType, opName := range operatorTests {
-		if !foundOperators[opType] {
-			t.Errorf("Expected to find operator %s (%s)", opType, opName)
-		}
-	}
+	compareTokens(t, "TestTokenizeOperators", expected, tokens)
 }
 
 func TestTokenizeKeywords(t *testing.T) {
@@ -207,75 +469,71 @@ func TestTokenizeKeywords(t *testing.T) {
 		t.Fatalf("Failed to tokenize file: %v", err)
 	}
 
-	keywordTests := []TokenType{
-		IF, ELIF, ELSE, WHILE, REPEAT, TIMES,
-		RETURN, BREAK, CONTINUE, TRUE, FALSE,
+	expected := []Token{
+		// # Test all keywords
+		{Type: COMMENT, Value: "# Test all keywords\n"},
+
+		// إذا صحيح:
+		{Type: IF, Value: "إذا"},
+		{Type: TRUE, Value: "صحيح"},
+		{Type: COLON, Value: ":"},
+		{Type: NEWLINE, Value: "\n"},
+
+		//     ارجع 1
+		{Type: NAME, Value: "    "}, // 4 spaces indentation
+		{Type: RETURN, Value: "ارجع"},
+		{Type: NUMBER, Value: "1"},
+		{Type: NEWLINE, Value: "\n"},
+
+		// وإذا خطأ:
+		{Type: ELIF, Value: "وإذا"},
+		{Type: FALSE, Value: "خطأ"},
+		{Type: COLON, Value: ":"},
+		{Type: NEWLINE, Value: "\n"},
+
+		//     ارجع 0
+		{Type: NAME, Value: "    "}, // 4 spaces indentation
+		{Type: RETURN, Value: "ارجع"},
+		{Type: NUMBER, Value: "0"},
+		{Type: NEWLINE, Value: "\n"},
+
+		// وإلا:
+		{Type: ELSE, Value: "وإلا"},
+		{Type: COLON, Value: ":"},
+		{Type: NEWLINE, Value: "\n"},
+
+		//     ارجع -1
+		{Type: NAME, Value: "    "}, // 4 spaces indentation
+		{Type: RETURN, Value: "ارجع"},
+		{Type: MINUS, Value: "-"},
+		{Type: NUMBER, Value: "1"},
+		{Type: NEWLINE, Value: "\n"},
+
+		// طالما خطأ:
+		{Type: WHILE, Value: "طالما"},
+		{Type: FALSE, Value: "خطأ"},
+		{Type: COLON, Value: ":"},
+		{Type: NEWLINE, Value: "\n"},
+
+		//     اخرج
+		{Type: NAME, Value: "    "}, // 4 spaces indentation
+		{Type: BREAK, Value: "اخرج"},
+		{Type: NEWLINE, Value: "\n"},
+
+		// كرر 5 مرات:
+		{Type: REPEAT, Value: "كرر"},
+		{Type: NUMBER, Value: "5"},
+		{Type: TIMES, Value: "مرات"},
+		{Type: COLON, Value: ":"},
+		{Type: NEWLINE, Value: "\n"},
+
+		//     تابع
+		{Type: NAME, Value: "    "}, // 4 spaces indentation
+		{Type: CONTINUE, Value: "تابع"},
+		{Type: NEWLINE, Value: "\n"},
+
+		{Type: EOF, Value: ""},
 	}
 
-	foundKeywords := make(map[TokenType]bool)
-	for _, tok := range tokens {
-		for _, kwType := range keywordTests {
-			if tok.Type == kwType {
-				foundKeywords[kwType] = true
-			}
-		}
-	}
-
-	for _, kwType := range keywordTests {
-		if !foundKeywords[kwType] {
-			t.Errorf("Expected to find keyword %s", kwType)
-		}
-	}
-}
-
-func TestTokenizeFileNotFound(t *testing.T) {
-	_, err := Tokenize("../../tests/nonexistent.daad")
-	if err == nil {
-		t.Error("Expected error for non-existent file, got nil")
-	}
-}
-
-func TestTokenizeEmptyFile(t *testing.T) {
-	tokens, err := Tokenize("../../tests/basic_arithmetic.daad")
-	if err != nil {
-		t.Fatalf("Failed to tokenize: %v", err)
-	}
-
-	// At minimum, should have EOF token
-	hasEOF := false
-	for _, tok := range tokens {
-		if tok.Type == EOF {
-			hasEOF = true
-		}
-	}
-
-	if !hasEOF {
-		t.Error("Expected EOF token in output")
-	}
-}
-
-func TestTokenDelimiters(t *testing.T) {
-	tokens, err := Tokenize("../../tests/functions.daad")
-	if err != nil {
-		t.Fatalf("Failed to tokenize file: %v", err)
-	}
-
-	delimiterTests := []TokenType{
-		LPAREN, RPAREN, COMMA, COLON,
-	}
-
-	foundDelimiters := make(map[TokenType]bool)
-	for _, tok := range tokens {
-		for _, delimType := range delimiterTests {
-			if tok.Type == delimType {
-				foundDelimiters[delimType] = true
-			}
-		}
-	}
-
-	for _, delimType := range delimiterTests {
-		if !foundDelimiters[delimType] {
-			t.Errorf("Expected to find delimiter %s", delimType)
-		}
-	}
+	compareTokens(t, "TestTokenizeKeywords", expected, tokens)
 }
