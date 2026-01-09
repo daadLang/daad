@@ -141,12 +141,7 @@ func Tokenize(filePath string) ([]Token, error) {
 
 	reader := bufio.NewReader(file)
 
-	lexer := &Lexer{
-		reader:  reader,
-		hasChar: false,
-		buffer:  make([]rune, 0, 256),
-		Tokens:  []Token{},
-	}
+	lexer := NewLexer(reader)
 
 	for {
 		tok := lexer.NextToken()

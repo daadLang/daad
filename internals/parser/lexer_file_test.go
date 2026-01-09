@@ -108,7 +108,7 @@ func TestTokenizeControlFlow(t *testing.T) {
 		{Type: NEWLINE, Value: "\n"},
 
 		//     اطبع("كبير")
-		{Type: NAME, Value: "    "}, // 4 spaces indentation
+		{Type: INDENT, Value: ""},
 		{Type: NAME, Value: "اطبع"},
 		{Type: LPAREN, Value: "("},
 		{Type: STRING, Value: "\"كبير\""},
@@ -116,12 +116,13 @@ func TestTokenizeControlFlow(t *testing.T) {
 		{Type: NEWLINE, Value: "\n"},
 
 		// والا:
+		{Type: DEDENT, Value: ""},
 		{Type: ELSE, Value: "والا"},
 		{Type: COLON, Value: ":"},
 		{Type: NEWLINE, Value: "\n"},
 
 		//     اطبع("صغير")
-		{Type: NAME, Value: "    "}, // 4 spaces indentation
+		{Type: INDENT, Value: ""},
 		{Type: NAME, Value: "اطبع"},
 		{Type: LPAREN, Value: "("},
 		{Type: STRING, Value: "\"صغير\""},
@@ -129,6 +130,7 @@ func TestTokenizeControlFlow(t *testing.T) {
 		{Type: NEWLINE, Value: "\n"},
 
 		// طالما العداد < 100:
+		{Type: DEDENT, Value: ""},
 		{Type: WHILE, Value: "طالما"},
 		{Type: NAME, Value: "العداد"},
 		{Type: LESS, Value: "<"},
@@ -137,13 +139,14 @@ func TestTokenizeControlFlow(t *testing.T) {
 		{Type: NEWLINE, Value: "\n"},
 
 		//     العداد += 1
-		{Type: NAME, Value: "    "}, // 4 spaces indentation
+		{Type: INDENT, Value: ""},
 		{Type: NAME, Value: "العداد"},
 		{Type: PLUS_ASSIGN, Value: "+="},
 		{Type: NUMBER, Value: "1"},
 		{Type: NEWLINE, Value: "\n"},
 
 		// لكل عنصر في القائمة:
+		{Type: DEDENT, Value: ""},
 		{Type: FOR, Value: "لكل"},
 		{Type: NAME, Value: "عنصر"},
 		{Type: IN, Value: "في"},
@@ -152,13 +155,14 @@ func TestTokenizeControlFlow(t *testing.T) {
 		{Type: NEWLINE, Value: "\n"},
 
 		//     اطبع(عنصر)
-		{Type: NAME, Value: "    "}, // 4 spaces indentation
+		{Type: INDENT, Value: ""},
 		{Type: NAME, Value: "اطبع"},
 		{Type: LPAREN, Value: "("},
 		{Type: NAME, Value: "عنصر"},
 		{Type: RPAREN, Value: ")"},
 		{Type: NEWLINE, Value: "\n"},
 
+		{Type: DEDENT, Value: ""},
 		{Type: EOF, Value: ""},
 	}
 
@@ -189,7 +193,7 @@ func TestTokenizeFunctions(t *testing.T) {
 		{Type: NEWLINE, Value: "\n"},
 
 		//     ارجع أ + ب
-		{Type: NAME, Value: "    "}, // 4 spaces indentation
+		{Type: INDENT, Value: ""},
 		{Type: RETURN, Value: "ارجع"},
 		{Type: NAME, Value: "أ"},
 		{Type: PLUS, Value: "+"},
@@ -197,6 +201,7 @@ func TestTokenizeFunctions(t *testing.T) {
 		{Type: NEWLINE, Value: "\n"},
 
 		// دالة طباعة_رسالة(نص):
+		{Type: DEDENT, Value: ""},
 		{Type: FUNC, Value: "دالة"},
 		{Type: NAME, Value: "طباعة_رسالة"},
 		{Type: LPAREN, Value: "("},
@@ -206,7 +211,7 @@ func TestTokenizeFunctions(t *testing.T) {
 		{Type: NEWLINE, Value: "\n"},
 
 		//     اطبع(نص)
-		{Type: NAME, Value: "    "}, // 4 spaces indentation
+		{Type: INDENT, Value: ""},
 		{Type: NAME, Value: "اطبع"},
 		{Type: LPAREN, Value: "("},
 		{Type: NAME, Value: "نص"},
@@ -214,11 +219,11 @@ func TestTokenizeFunctions(t *testing.T) {
 		{Type: NEWLINE, Value: "\n"},
 
 		//     ارجع
-		{Type: NAME, Value: "    "}, // 4 spaces indentation
 		{Type: RETURN, Value: "ارجع"},
 		{Type: NEWLINE, Value: "\n"},
 
 		// نتيجة = جمع(5, 10)
+		{Type: DEDENT, Value: ""},
 		{Type: NAME, Value: "نتيجة"},
 		{Type: ASSIGN, Value: "="},
 		{Type: NAME, Value: "جمع"},
@@ -480,47 +485,51 @@ func TestTokenizeKeywords(t *testing.T) {
 		{Type: NEWLINE, Value: "\n"},
 
 		//     ارجع 1
-		{Type: NAME, Value: "    "}, // 4 spaces indentation
+		{Type: INDENT, Value: ""},
 		{Type: RETURN, Value: "ارجع"},
 		{Type: NUMBER, Value: "1"},
 		{Type: NEWLINE, Value: "\n"},
 
 		// وإذا خطأ:
+		{Type: DEDENT, Value: ""},
 		{Type: ELIF, Value: "وإذا"},
 		{Type: FALSE, Value: "خطأ"},
 		{Type: COLON, Value: ":"},
 		{Type: NEWLINE, Value: "\n"},
 
 		//     ارجع 0
-		{Type: NAME, Value: "    "}, // 4 spaces indentation
+		{Type: INDENT, Value: ""},
 		{Type: RETURN, Value: "ارجع"},
 		{Type: NUMBER, Value: "0"},
 		{Type: NEWLINE, Value: "\n"},
 
 		// وإلا:
+		{Type: DEDENT, Value: ""},
 		{Type: ELSE, Value: "وإلا"},
 		{Type: COLON, Value: ":"},
 		{Type: NEWLINE, Value: "\n"},
 
 		//     ارجع -1
-		{Type: NAME, Value: "    "}, // 4 spaces indentation
+		{Type: INDENT, Value: ""},
 		{Type: RETURN, Value: "ارجع"},
 		{Type: MINUS, Value: "-"},
 		{Type: NUMBER, Value: "1"},
 		{Type: NEWLINE, Value: "\n"},
 
 		// طالما خطأ:
+		{Type: DEDENT, Value: ""},
 		{Type: WHILE, Value: "طالما"},
 		{Type: FALSE, Value: "خطأ"},
 		{Type: COLON, Value: ":"},
 		{Type: NEWLINE, Value: "\n"},
 
 		//     اخرج
-		{Type: NAME, Value: "    "}, // 4 spaces indentation
+		{Type: INDENT, Value: ""},
 		{Type: BREAK, Value: "اخرج"},
 		{Type: NEWLINE, Value: "\n"},
 
 		// كرر 5 مرات:
+		{Type: DEDENT, Value: ""},
 		{Type: REPEAT, Value: "كرر"},
 		{Type: NUMBER, Value: "5"},
 		{Type: TIMES, Value: "مرات"},
@@ -528,10 +537,11 @@ func TestTokenizeKeywords(t *testing.T) {
 		{Type: NEWLINE, Value: "\n"},
 
 		//     تابع
-		{Type: NAME, Value: "    "}, // 4 spaces indentation
+		{Type: INDENT, Value: ""},
 		{Type: CONTINUE, Value: "تابع"},
 		{Type: NEWLINE, Value: "\n"},
 
+		{Type: DEDENT, Value: ""},
 		{Type: EOF, Value: ""},
 	}
 

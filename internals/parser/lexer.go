@@ -7,26 +7,28 @@ import (
 
 // ? rune is int32 representing a Unicode code char
 type Lexer struct {
-	reader      *bufio.Reader
-	currentChar rune
-	hasChar     bool
-	buffer      []rune
-	spacesCount int
-	openBraces  int // we need to track any type of open braces `({[` to handle spaces , (in case of openBraces > 0 we ignore spaces and newlines)
-	isNewLine   bool
-	Tokens      []Token
+	reader         *bufio.Reader
+	currentChar    rune
+	hasChar        bool
+	buffer         []rune
+	indentStack    []int // stack to track indentation levels
+	openBraces     int   // we need to track any type of open braces `({[` to handle spaces , (in case of openBraces > 0 we ignore spaces and newlines)
+	isNewLine      bool
+	pendingDedents int // number of DEDENT tokens to emit
+	Tokens         []Token
 }
 
 func NewLexer(r *bufio.Reader) *Lexer {
 	return &Lexer{
-		reader:      r,
-		currentChar: 0,
-		hasChar:     false,
-		buffer:      make([]rune, 0, 64),
-		spacesCount: 0,
-		openBraces:  0,
-		isNewLine:   true,
-		Tokens:      make([]Token, 0),
+		reader:         r,
+		currentChar:    0,
+		hasChar:        false,
+		indentStack:    []int{0}, // start with base indentation of 0
+		buffer:         make([]rune, 0, 64),
+		openBraces:     0,
+		isNewLine:      true,
+		pendingDedents: 0,
+		Tokens:         make([]Token, 0),
 	}
 }
 
@@ -65,35 +67,83 @@ func (l *Lexer) skipWhitespace() {
 	}
 }
 
+// Helper functions for indentation stack
+func (l *Lexer) pushIndent(level int) {
+	l.indentStack = append(l.indentStack, level)
+}
+
+func (l *Lexer) popIndent() int {
+	if len(l.indentStack) <= 1 {
+		return 0 // Never pop the base level
+	}
+	top := l.indentStack[len(l.indentStack)-1]
+	l.indentStack = l.indentStack[:len(l.indentStack)-1]
+	return top
+}
+
+func (l *Lexer) peekIndent() int {
+	if len(l.indentStack) == 0 {
+		return 0
+	}
+	return l.indentStack[len(l.indentStack)-1]
+}
+
+func (l *Lexer) indentStackSize() int {
+	return len(l.indentStack)
+}
+
 // this function will replace skipWhitespace
 func (l *Lexer) handleSpaces() (Token, int) {
+	// If we have pending DEDENT tokens, return them first
+	if l.pendingDedents > 0 {
+		l.pendingDedents--
+		return Token{Type: DEDENT, Value: ""}, 1
+	}
+
 	if l.openBraces > 0 {
 		l.skipWhitespace()
 		return Token{}, 0
 	} else {
 		if l.isNewLine {
+			currentIndent := 0
 			for {
 				peek := l.peek()
 				if peek == ' ' {
-					l.spacesCount++
+					currentIndent++
 					l.advance()
 				} else if peek == '\t' {
-					l.spacesCount += 4
+					currentIndent += 4
 					l.advance()
 				} else if peek == '\n' || peek == '\r' {
-					// skip in case of empty line e.g `     \n`
-					l.spacesCount = 0
+					currentIndent = 0
 					l.advance()
+					l.clearBuffer()
 					// stay in isNewLine state and continue to next line
 					continue
 				} else {
 					l.isNewLine = false
-					if l.spacesCount > 0 {
-						spaces := make([]rune, l.spacesCount)
-						for i := range spaces {
-							spaces[i] = ' '
+					l.clearBuffer()
+
+					topIndent := l.peekIndent()
+
+					if currentIndent > topIndent {
+						l.pushIndent(currentIndent)
+						return Token{Type: INDENT, Value: ""}, 1
+					} else if currentIndent < topIndent {
+						dedentCount := 0
+						for l.indentStackSize() > 1 && l.peekIndent() > currentIndent {
+							l.popIndent()
+							dedentCount++
 						}
-						return Token{Type: NAME, Value: string(spaces)}, 1
+
+						if l.peekIndent() != currentIndent {
+							return Token{Type: ILLEGAL, Value: "indentation error"}, 1
+						}
+
+						if dedentCount > 0 {
+							l.pendingDedents = dedentCount - 1
+							return Token{Type: DEDENT, Value: ""}, 1
+						}
 					}
 					break
 				}
@@ -112,7 +162,6 @@ func (l *Lexer) handleSpaces() (Token, int) {
 				}
 			}
 		}
-
 	}
 	return Token{}, 0
 
@@ -136,7 +185,7 @@ func (l *Lexer) readString() string {
 	str_delimiter := l.peek()
 	l.advance() // skip the first one
 
-	// Read multiline string
+	// ? multiline string
 	if l.peek() == str_delimiter {
 		l.advance() // skip 2
 		if l.peek() == str_delimiter {
@@ -233,11 +282,15 @@ func (l *Lexer) simplifyKeyword(keyword []rune) string {
 func (l *Lexer) NextToken() Token {
 	tok, handled := l.handleSpaces()
 	if handled > 0 {
-		l.spacesCount = 0
 		return tok
 	}
 	r := l.peek()
 	if r == 0 {
+		// At EOF, emit any pending DEDENTs
+		if l.indentStackSize() > 1 {
+			l.popIndent()
+			return Token{Type: DEDENT, Value: ""}
+		}
 		return Token{Type: EOF, Value: ""}
 	}
 
