@@ -10,11 +10,11 @@ func compareTokens(t *testing.T, testName string, expected []Token, actual []Tok
 		t.Errorf("%s: Expected %d tokens, got %d tokens", testName, len(expected), len(actual))
 		t.Logf("Expected tokens:")
 		for i, tok := range expected {
-			t.Logf("  [%d] Type: %s, Value: %q", i, tok.Type, tok.Value)
+			t.Logf("  [%d] Type: %s, Value: %q", i, tok.Type.String(), tok.Value)
 		}
 		t.Logf("Actual tokens:")
 		for i, tok := range actual {
-			t.Logf("  [%d] Type: %s, Value: %q", i, tok.Type, tok.Value)
+			t.Logf("  [%d] Type: %s, Value: %q", i, tok.Type.String(), tok.Value)
 		}
 		return
 	}
@@ -22,7 +22,7 @@ func compareTokens(t *testing.T, testName string, expected []Token, actual []Tok
 	for i := 0; i < len(expected); i++ {
 		if expected[i].Type != actual[i].Type {
 			t.Errorf("%s: Token %d type mismatch. Expected %s, got %s",
-				testName, i, expected[i].Type, actual[i].Type)
+				testName, i, expected[i].Type.String(), actual[i].Type.String())
 		}
 		if expected[i].Value != actual[i].Value {
 			t.Errorf("%s: Token %d value mismatch. Expected %q, got %q",
