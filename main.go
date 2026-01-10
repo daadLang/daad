@@ -1,7 +1,7 @@
 package main
 
-import "fmt"
+import "github.com/TechGeeks-Club/daad/cmd"
 
 func main() {
-	fmt.Println("Daad - Arabic Programming Language")
+	cmd.Execute()
 }
