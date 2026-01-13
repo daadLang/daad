@@ -1,4 +1,4 @@
-module github.com/TechGeeks-Club/daad
+module github.com/daadLang/daad
 
 go 1.25.1
 

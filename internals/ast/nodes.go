@@ -1,6 +1,6 @@
 package ast
 
-import "github.com/TechGeeks-Club/daad/internals/lexer"
+import "github.com/daadLang/daad/internals/lexer"
 
 // TODO: rread `https://docs.python.org/3/library/ast.html` for nodes
 

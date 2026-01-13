@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/TechGeeks-Club/daad/internals/lexer"
+	"github.com/daadLang/daad/internals/lexer"
 	"github.com/spf13/cobra"
 )
 

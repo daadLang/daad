@@ -1,6 +1,6 @@
 package main
 
-import "github.com/TechGeeks-Club/daad/cmd"
+import "github.com/daadLang/daad/cmd"
 
 func main() {
 	cmd.Execute()

@@ -3,7 +3,7 @@ package lexer
 import (
 	"testing"
 
-	"github.com/TechGeeks-Club/daad/internals/lexer"
+	"github.com/daadLang/daad/internals/lexer"
 )
 
 // Helper function to compare tokens
