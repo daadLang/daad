@@ -2,7 +2,35 @@ package ast
 
 import "github.com/daadLang/daad/internals/lexer"
 
-// TODO: rread `https://docs.python.org/3/library/ast.html` for nodes
+// TODO: read `https://docs.python.org/3/library/ast.html` for nodes
+
+// ? ==========================================
+// ? TYPES
+// ? ==========================================
+
+type DataType int
+
+const (
+	TypeInt DataType = iota
+	TypeFloat
+	TypeString
+	TypeBool
+	TypeList
+	TypeTuple
+	TypeDict
+	TypeFunction
+	TypeNone
+)
+
+type Var struct {
+	Value any
+	Type  DataType
+}
+
+type Arguments struct {
+	Args     []string
+	Defaults []Expr
+}
 
 // ? ==========================================
 // ? BASE
@@ -66,6 +94,14 @@ type ReturnStmt struct {
 
 func (*ReturnStmt) stmtNode() {}
 
+type FunctionDefStmt struct {
+	Name string
+	Args Arguments
+	Body []Stmt
+}
+
+func (*FunctionDefStmt) stmtNode() {}
+
 // ? ==========================================
 // ? EXPRESSIONS
 // ? ==========================================
@@ -76,8 +112,9 @@ type Name struct {
 
 func (*Name) exprNode() {}
 
+// e.g
 type Constant struct {
-	Value any
+	Value Var
 }
 
 func (*Constant) exprNode() {}
@@ -145,3 +182,18 @@ type UnaryOp struct {
 }
 
 func (*UnaryOp) exprNode() {}
+
+type BoolOp struct {
+	Left  Expr
+	Op    lexer.TokenType // "and", "or"
+	Right Expr
+}
+
+func (*BoolOp) exprNode() {}
+
+type CallExpr struct {
+	Func Expr
+	Args []Expr
+}
+
+func (*CallExpr) exprNode() {}
