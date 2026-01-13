@@ -23,7 +23,7 @@ func (i *Interpreter) execIfStmt(stmt *ast.IfStmt) {
 
 func (i *Interpreter) execForStmt(stmt *ast.ForStmt) {
 	iterable := i.execExpr(stmt.Iter)
-	iterableSlice, ok := iterable.([]any)
+	iterableSlice, ok := iterable.([]ast.Var)
 	if !ok {
 		panic("for loop iterable must be a slice")
 	}
