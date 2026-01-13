@@ -5,6 +5,7 @@ type Token struct {
 	Value string
 }
 
+// TODO : add the category of the Token (e.g., Keyword, Operator(BinOp,BitOp...), Literal, etc.) for esaier parsing later
 type TokenType int
 
 const (
