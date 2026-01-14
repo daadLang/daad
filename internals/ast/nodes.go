@@ -5,34 +5,6 @@ import "github.com/daadLang/daad/internals/lexer"
 // TODO: read `https://docs.python.org/3/library/ast.html` for nodes
 
 // ? ==========================================
-// ? TYPES
-// ? ==========================================
-
-type DataType int
-
-const (
-	TypeInt DataType = iota
-	TypeFloat
-	TypeString
-	TypeBool
-	TypeList
-	TypeTuple
-	TypeDict
-	TypeFunction
-	TypeNone
-)
-
-type Var struct {
-	Value any
-	Type  DataType
-}
-
-type Arguments struct {
-	Args     []string
-	Defaults []Expr
-}
-
-// ? ==========================================
 // ? BASE
 // ? ==========================================
 
@@ -95,9 +67,10 @@ type ReturnStmt struct {
 func (*ReturnStmt) stmtNode() {}
 
 type FunctionDefStmt struct {
-	Name string
-	Args Arguments
-	Body []Stmt
+	Name     string
+	Args     []string
+	Defaults []Expr
+	Body     []Stmt
 }
 
 func (*FunctionDefStmt) stmtNode() {}
@@ -114,7 +87,7 @@ func (*Name) exprNode() {}
 
 // e.g
 type Constant struct {
-	Value Var
+	Value any
 }
 
 func (*Constant) exprNode() {}

@@ -1,20 +1,18 @@
 package interpreter
 
-import "github.com/daadLang/daad/internals/ast"
-
 type Env struct {
-	values map[string]ast.Var
+	values map[string]Value
 	parent *Env
 }
 
 func NewEnv(parent *Env) *Env {
 	return &Env{
-		values: make(map[string]ast.Var),
+		values: make(map[string]Value),
 		parent: parent,
 	}
 }
 
-func (e *Env) Get(name string) ast.Var {
+func (e *Env) Get(name string) Value {
 	if v, ok := e.values[name]; ok {
 		return v
 	}
@@ -24,6 +22,6 @@ func (e *Env) Get(name string) ast.Var {
 	panic("undefined variable: " + name)
 }
 
-func (e *Env) Set(name string, val ast.Var) {
+func (e *Env) Set(name string, val Value) {
 	e.values[name] = val
 }
