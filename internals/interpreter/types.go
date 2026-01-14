@@ -7,6 +7,7 @@ type ValueType int
 const (
 	IntType ValueType = iota
 	FloatType
+	CharType
 	StringType
 	BoolType
 	ListType
@@ -39,6 +40,12 @@ func (StringValue) Type() ValueType { return StringType }
 func (s StringValue) Len() int {
 	return len(s.V)
 }
+
+type CharValue struct {
+	V rune
+}
+
+func (CharValue) Type() ValueType { return CharType }
 
 type BoolValue struct {
 	V bool
