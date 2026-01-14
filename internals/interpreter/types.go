@@ -19,11 +19,17 @@ const (
 
 type Value interface{}
 
-type NumberValue struct {
+type IntValue struct {
+	V int
+}
+
+func (IntValue) Type() ValueType { return IntType }
+
+type FloatValue struct {
 	V float64
 }
 
-func (NumberValue) Type() ValueType { return IntType }
+func (FloatValue) Type() ValueType { return FloatType }
 
 type StringValue struct {
 	V string
@@ -73,5 +79,6 @@ type BuiltinValue struct {
 func (*BuiltinValue) Type() ValueType { return BuiltinType }
 
 func (b *BuiltinValue) Call(args []Value) (Value, error) {
+	// TODO: better args handling (default values, None ...)
 	return b.Fn(args)
 }
