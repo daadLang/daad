@@ -75,6 +75,21 @@ type FunctionDefStmt struct {
 
 func (*FunctionDefStmt) stmtNode() {}
 
+type AssignStmt struct {
+	Target Name
+	Value  Expr
+}
+
+func (*AssignStmt) stmtNode() {}
+
+type BreakStmt struct{}
+
+func (*BreakStmt) stmtNode() {}
+
+type ContinueStmt struct{}
+
+func (*ContinueStmt) stmtNode() {}
+
 // ? ==========================================
 // ? EXPRESSIONS
 // ? ==========================================
@@ -119,13 +134,6 @@ type Tuple struct {
 
 func (*Tuple) exprNode() {}
 
-type Call struct {
-	Func Expr
-	Args []Expr
-}
-
-func (*Call) exprNode() {}
-
 type Compare struct {
 	Left       Expr
 	Op         lexer.TokenType // ">", "<", "=="
@@ -133,13 +141,6 @@ type Compare struct {
 }
 
 func (*Compare) exprNode() {}
-
-type Assign struct {
-	Target Expr
-	Value  Expr
-}
-
-func (*Assign) exprNode() {}
 
 type BinOp struct {
 	Left  Expr
@@ -164,9 +165,9 @@ type BoolOp struct {
 
 func (*BoolOp) exprNode() {}
 
-type CallExpr struct {
-	Func Expr
+type FunctionCallExpr struct {
+	Name string
 	Args []Expr
 }
 
-func (*CallExpr) exprNode() {}
+func (*FunctionCallExpr) exprNode() {}

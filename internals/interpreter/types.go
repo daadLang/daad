@@ -20,6 +20,31 @@ const (
 
 type Value interface{}
 
+func ToValue(v interface{}) Value {
+	switch val := v.(type) {
+	case int:
+		return IntValue{V: val}
+	case int64:
+		return IntValue{V: int(val)}
+	case float64:
+		return FloatValue{V: val}
+	case float32:
+		return FloatValue{V: float64(val)}
+	case string:
+		return StringValue{V: val}
+	case rune:
+		return CharValue{V: val}
+	case bool:
+		return BoolValue{V: val}
+	case nil:
+		return NoneValue{}
+	case Value:
+		return val
+	default:
+		return val
+	}
+}
+
 type IntValue struct {
 	V int
 }

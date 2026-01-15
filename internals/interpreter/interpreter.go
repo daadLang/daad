@@ -1,8 +1,6 @@
 package interpreter
 
 import (
-	"fmt"
-
 	ast "github.com/daadLang/daad/internals/ast"
 )
 
@@ -22,7 +20,7 @@ func (i *Interpreter) Run(m *ast.Module) {
 	}
 }
 
-func (i *Interpreter) execStmt(stmt ast.Stmt) {
+func (i *Interpreter) execStmt(stmt ast.Stmt) Signal {
 	switch e := stmt.(type) {
 	case *ast.ExprStmt:
 		i.execExpr(e.Value)
@@ -32,20 +30,31 @@ func (i *Interpreter) execStmt(stmt ast.Stmt) {
 		i.execForStmt(e)
 	case *ast.WhileStmt:
 		i.execWhileStmt(e)
+	case *ast.AssignStmt:
+		value := i.execExpr(e.Value)
+		i.env.Set(e.Target.Id, value)
 	case *ast.ReturnStmt:
-		i.execReturnStmt(e)
+		return i.execReturnStmt(e)
 	default:
-		panic("unknown statement: " + fmt.Sprintf("%T", stmt))
+		panic(newRuntimeError("unknown statement: %T", stmt))
 	}
+	return Signal{SignalType: NoSignal}
 }
 
-func (i *Interpreter) execExpr(expr ast.Expr) any {
+func (i *Interpreter) execExpr(expr ast.Expr) Value {
 	switch e := expr.(type) {
 	case *ast.Constant:
 		return e.Value
 
 	case *ast.Name:
 		return i.env.Get(e.Id)
+
+	case *ast.UnaryOp:
+		return i.execUnaryOpExpr(e)
+
+	case *ast.BinOp:
+		return i.execBinOpExpr(e)
 	}
-	panic("unknown expression: " + fmt.Sprintf("%T", expr))
+
+	panic(newRuntimeError("unknown expression: %T", expr))
 }

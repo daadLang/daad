@@ -55,12 +55,44 @@ func (i *Interpreter) execWhileStmt(stmt *ast.WhileStmt) {
 	}
 }
 
-func (i *Interpreter) execReturnStmt(stmt *ast.ReturnStmt) {
+func (i *Interpreter) execReturnStmt(stmt *ast.ReturnStmt) Signal {
 	value := i.execExpr(stmt.Value)
-	// Using panic to simulate return behavior
-	panic(returnValue{value})
+	return Signal{
+		SignalType: ReturnSignal,
+		Value:      value,
+	}
 }
 
-type returnValue struct {
-	value Value
+func (i *Interpreter) execFunctionDefStmt(stmt *ast.FunctionDefStmt) {
+	funcValue := &FunctionValue{
+		Name:     stmt.Name,
+		Args:     stmt.Args,
+		Defaults: stmt.Defaults,
+		Body:     stmt.Body,
+		Env:      i.env,
+	}
+	i.env.Set(stmt.Name, funcValue)
+}
+
+func (i *Interpreter) execFunctionCallExpr(expr *ast.FunctionCallExpr) Value {
+	funcValue := i.env.Get(expr.Name)
+	if funcValue == nil {
+		panic("undefined function: " + expr.Name)
+	}
+	fv, ok := funcValue.(*FunctionValue)
+	if !ok {
+		panic("called object is not a function")
+	}
+
+	// Evaluate all argument expressions to get their values
+	args := make([]Value, len(expr.Args))
+	for idx, argExpr := range expr.Args {
+		args[idx] = i.execExpr(argExpr)
+	}
+
+	result, err := fv.Call(args)
+	if err != nil {
+		panic(err.Error())
+	}
+	return result
 }
