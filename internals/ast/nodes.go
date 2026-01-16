@@ -1,6 +1,8 @@
 package ast
 
-import "github.com/daadLang/daad/internals/lexer"
+import (
+	"github.com/daadLang/daad/internals/lexer"
+)
 
 // TODO: read `https://docs.python.org/3/library/ast.html` for nodes
 
@@ -65,6 +67,29 @@ type ReturnStmt struct {
 }
 
 func (*ReturnStmt) stmtNode() {}
+
+type BreakStmt struct{}
+
+func (*BreakStmt) stmtNode() {}
+
+type ContinueStmt struct{}
+
+func (*ContinueStmt) stmtNode() {}
+
+type RepeatStmt struct {
+	Times Expr
+	Body  []Stmt
+}
+
+func (*RepeatStmt) stmtNode() {}
+
+type AugmentedAssignStmt struct {
+	Target Expr
+	Op     lexer.TokenType
+	Value  Expr
+}
+
+func (*AugmentedAssignStmt) stmtNode() {}
 
 type FunctionDefStmt struct {
 	Name     string
