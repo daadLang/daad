@@ -68,14 +68,6 @@ type ReturnStmt struct {
 
 func (*ReturnStmt) stmtNode() {}
 
-type BreakStmt struct{}
-
-func (*BreakStmt) stmtNode() {}
-
-type ContinueStmt struct{}
-
-func (*ContinueStmt) stmtNode() {}
-
 type RepeatStmt struct {
 	Times Expr
 	Body  []Stmt
@@ -190,9 +182,18 @@ type BoolOp struct {
 
 func (*BoolOp) exprNode() {}
 
-type FunctionCallExpr struct {
-	Name string
+// Call represents a function call expression (e.g., func(args))
+type Call struct {
+	Func Expr
 	Args []Expr
 }
 
-func (*FunctionCallExpr) exprNode() {}
+func (*Call) exprNode() {}
+
+// Assign represents an assignment expression (e.g., a = 5)
+type Assign struct {
+	Target Expr
+	Value  Expr
+}
+
+func (*Assign) exprNode() {}

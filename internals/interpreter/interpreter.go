@@ -54,6 +54,9 @@ func (i *Interpreter) execExpr(expr ast.Expr) Value {
 
 	case *ast.BinOp:
 		return i.execBinOpExpr(e)
+
+	case *ast.Call:
+		return i.execCallExpr(e)
 	}
 
 	panic(newRuntimeError("unknown expression: %T", expr))

@@ -192,17 +192,6 @@ func printNode(node Node, indent int) {
 		fmt.Printf("%s  Right:\n", prefix)
 		printNode(n.Right, indent+2)
 
-	case *CallExpr:
-		fmt.Printf("%sCallExpr\n", prefix)
-		fmt.Printf("%s  Func:\n", prefix)
-		printNode(n.Func, indent+2)
-		if len(n.Args) > 0 {
-			fmt.Printf("%s  Args:\n", prefix)
-			for _, arg := range n.Args {
-				printNode(arg, indent+2)
-			}
-		}
-
 	default:
 		fmt.Printf("%s<unknown node: %T>\n", prefix, node)
 	}

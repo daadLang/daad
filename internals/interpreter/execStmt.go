@@ -74,10 +74,11 @@ func (i *Interpreter) execFunctionDefStmt(stmt *ast.FunctionDefStmt) {
 	i.env.Set(stmt.Name, funcValue)
 }
 
-func (i *Interpreter) execFunctionCallExpr(expr *ast.FunctionCallExpr) Value {
-	funcValue := i.env.Get(expr.Name)
+func (i *Interpreter) execCallExpr(expr *ast.Call) Value {
+	// Get the function being called
+	funcValue := i.execExpr(expr.Func)
 	if funcValue == nil {
-		panic("undefined function: " + expr.Name)
+		panic("undefined function")
 	}
 	fv, ok := funcValue.(*FunctionValue)
 	if !ok {
