@@ -164,7 +164,7 @@ func (p *Parser) parseIfStmt() *ast.IfStmt {
 		if len(orelse) > 0 {
 			// Attach else to the last elif
 			lastElif := orelse[0].(*ast.IfStmt)
-			for lastElif.Orelse != nil && len(lastElif.Orelse) > 0 {
+			for len(lastElif.Orelse) > 0 {
 				if elif, ok := lastElif.Orelse[0].(*ast.IfStmt); ok {
 					lastElif = elif
 				} else {

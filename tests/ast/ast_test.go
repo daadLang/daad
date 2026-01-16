@@ -3,6 +3,7 @@ package ast_test
 import (
 	"flag"
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/daadLang/daad/internals/ast"
@@ -17,18 +18,34 @@ func init() {
 }
 
 func TestPrintAST(t *testing.T) {
-	if inputFile == "" {
-		t.Skip("No input file provided. Use -file flag to specify a .daad file")
+	var testFiles []string
+
+	if inputFile != "" {
+		testFiles = append(testFiles, inputFile)
+	} else {
+		files, err := os.ReadDir("../examples/")
+		if err != nil {
+			t.Fatalf("Failed to read examples directory: %v", err)
+		}
+		for _, file := range files {
+			if !file.IsDir() && len(file.Name()) > 5 && file.Name()[len(file.Name())-5:] == ".daad" {
+				testFiles = append(testFiles, "../examples/"+file.Name())
+			}
+		}
 	}
 
-	tokens, err := lexer.Tokenize(inputFile)
-	if err != nil {
-		t.Fatalf("Failed to tokenize file %s: %v", inputFile, err)
+	for _, file := range testFiles {
+		t.Run(file, func(t *testing.T) {
+			tokens, err := lexer.Tokenize(file)
+			if err != nil {
+				t.Fatalf("Failed to tokenize file %s: %v", file, err)
+			}
+
+			p := parser.NewParser(tokens)
+			module := p.Parse()
+
+			fmt.Printf("AST for %s:\n", file)
+			ast.PrintAST(module)
+		})
 	}
-
-	p := parser.NewParser(tokens)
-	module := p.Parse()
-
-	fmt.Printf("AST for %s:\n", inputFile)
-	ast.PrintAST(module)
 }
