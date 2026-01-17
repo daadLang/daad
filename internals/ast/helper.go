@@ -2,197 +2,207 @@ package ast
 
 import (
 	"fmt"
-	"strings"
 )
 
 // ? ==========================================
 // ? AST PRINTING
 // ? ==========================================
 
-// PrintAST prints the AST tree in a readable format
 func PrintAST(module Module) {
 	fmt.Println("Module")
-	for _, stmt := range module.Body {
-		printNode(stmt, 1)
+	for i, stmt := range module.Body {
+		last := i == len(module.Body)-1
+		printNode(stmt, "", last)
 	}
 }
 
-func printNode(node Node, indent int) {
-	prefix := strings.Repeat("  ", indent)
+func printHeader(prefix string, isLast bool, header string) {
+	conn := "├── "
+	if isLast {
+		conn = "└── "
+	}
+	fmt.Printf("%s%s%s\n", prefix, conn, header)
+}
 
+func childPrefix(prefix string, isLast bool) string {
+	if isLast {
+		return prefix + "    "
+	}
+	return prefix + "│   "
+}
+
+func printLabelWithNode(prefix string, fieldIsLast bool, label string, node Node) {
+	printHeader(prefix, fieldIsLast, label)
+	newPref := childPrefix(prefix, fieldIsLast)
+	// single child under the label -> it's the last sibling inside that label
+	printNode(node, newPref, true)
+}
+
+func printLabelWithNodes(prefix string, fieldIsLast bool, label string, nodes []Node) {
+	printHeader(prefix, fieldIsLast, label)
+	newPref := childPrefix(prefix, fieldIsLast)
+	for i, n := range nodes {
+		last := i == len(nodes)-1
+		printNode(n, newPref, last)
+	}
+}
+
+func printNode(node Node, prefix string, isLast bool) {
 	switch n := node.(type) {
 	// Statements
 	case *IfStmt:
-		fmt.Printf("%sIfStmt\n", prefix)
-		fmt.Printf("%s  Test:\n", prefix)
-		printNode(n.Test, indent+2)
-		fmt.Printf("%s  Body:\n", prefix)
-		for _, stmt := range n.Body {
-			printNode(stmt, indent+2)
-		}
+		printHeader(prefix, isLast, "IfStmt")
+		// children: Test, Body, (optional) Orelse
+		// Test
+		testLast := len(n.Body) == 0 && len(n.Orelse) == 0
+		printLabelWithNode(childPrefix(prefix, isLast), testLast, "Test:", n.Test)
+		// Body
+		bodyIsLast := len(n.Orelse) == 0
+		printLabelWithNodes(childPrefix(prefix, isLast), bodyIsLast, "Body:", nodesFromStmts(n.Body))
+		// Orelse
 		if len(n.Orelse) > 0 {
-			fmt.Printf("%s  Orelse:\n", prefix)
-			for _, stmt := range n.Orelse {
-				printNode(stmt, indent+2)
-			}
+			printLabelWithNodes(childPrefix(prefix, isLast), true, "Orelse:", nodesFromStmts(n.Orelse))
 		}
 
 	case *ForStmt:
-		fmt.Printf("%sForStmt\n", prefix)
-		fmt.Printf("%s  Target:\n", prefix)
-		printNode(n.Target, indent+2)
-		fmt.Printf("%s  Iter:\n", prefix)
-		printNode(n.Iter, indent+2)
-		fmt.Printf("%s  Body:\n", prefix)
-		for _, stmt := range n.Body {
-			printNode(stmt, indent+2)
-		}
+		printHeader(prefix, isLast, "ForStmt")
+		base := childPrefix(prefix, isLast)
+		printLabelWithNode(base, false, "Target:", n.Target)
+		printLabelWithNode(base, false, "Iter:", n.Iter)
+		printLabelWithNodes(base, true, "Body:", nodesFromStmts(n.Body))
 		if len(n.Orelse) > 0 {
-			fmt.Printf("%s  Orelse:\n", prefix)
-			for _, stmt := range n.Orelse {
-				printNode(stmt, indent+2)
-			}
+			printLabelWithNodes(base, true, "Orelse:", nodesFromStmts(n.Orelse))
 		}
 
 	case *WhileStmt:
-		fmt.Printf("%sWhileStmt\n", prefix)
-		fmt.Printf("%s  Test:\n", prefix)
-		printNode(n.Test, indent+2)
-		fmt.Printf("%s  Body:\n", prefix)
-		for _, stmt := range n.Body {
-			printNode(stmt, indent+2)
-		}
+		printHeader(prefix, isLast, "WhileStmt")
+		base := childPrefix(prefix, isLast)
+		printLabelWithNode(base, false, "Test:", n.Test)
+		printLabelWithNodes(base, true, "Body:", nodesFromStmts(n.Body))
 		if len(n.Orelse) > 0 {
-			fmt.Printf("%s  Orelse:\n", prefix)
-			for _, stmt := range n.Orelse {
-				printNode(stmt, indent+2)
-			}
+			printLabelWithNodes(base, true, "Orelse:", nodesFromStmts(n.Orelse))
 		}
 
 	case *ExprStmt:
-		fmt.Printf("%sExprStmt\n", prefix)
-		printNode(n.Value, indent+1)
+		printHeader(prefix, isLast, "ExprStmt")
+		printLabelWithNode(childPrefix(prefix, isLast), true, "Value:", n.Value)
 
 	case *ReturnStmt:
-		fmt.Printf("%sReturnStmt\n", prefix)
+		printHeader(prefix, isLast, "ReturnStmt")
 		if n.Value != nil {
-			printNode(n.Value, indent+1)
+			printLabelWithNode(childPrefix(prefix, isLast), true, "Value:", n.Value)
 		}
 
 	case *BreakStmt:
-		fmt.Printf("%sBreakStmt\n", prefix)
+		printHeader(prefix, isLast, "BreakStmt")
 
 	case *ContinueStmt:
-		fmt.Printf("%sContinueStmt\n", prefix)
+		printHeader(prefix, isLast, "ContinueStmt")
 
 	case *RepeatStmt:
-		fmt.Printf("%sRepeatStmt\n", prefix)
-		fmt.Printf("%s  Times:\n", prefix)
-		printNode(n.Times, indent+2)
-		fmt.Printf("%s  Body:\n", prefix)
-		for _, stmt := range n.Body {
-			printNode(stmt, indent+2)
-		}
+		printHeader(prefix, isLast, "RepeatStmt")
+		base := childPrefix(prefix, isLast)
+		printLabelWithNode(base, false, "Times:", n.Times)
+		printLabelWithNodes(base, true, "Body:", nodesFromStmts(n.Body))
 
 	case *AugmentedAssignStmt:
-		fmt.Printf("%sAugmentedAssignStmt (Op: %s)\n", prefix, n.Op)
-		fmt.Printf("%s  Target:\n", prefix)
-		printNode(n.Target, indent+2)
-		fmt.Printf("%s  Value:\n", prefix)
-		printNode(n.Value, indent+2)
+		printHeader(prefix, isLast, fmt.Sprintf("AugmentedAssignStmt (Op: %s)", n.Op))
+		base := childPrefix(prefix, isLast)
+		printLabelWithNode(base, false, "Target:", n.Target)
+		printLabelWithNode(base, true, "Value:", n.Value)
 
 	case *FunctionDefStmt:
-		fmt.Printf("%sFunctionDefStmt (Name: %s, Args: %v)\n", prefix, n.Name, n.Args)
+		printHeader(prefix, isLast, fmt.Sprintf("FunctionDefStmt (Name: %s, Args: %v)", n.Name, n.Args))
+		base := childPrefix(prefix, isLast)
 		if len(n.Defaults) > 0 {
-			fmt.Printf("%s  Defaults:\n", prefix)
-			for _, def := range n.Defaults {
-				printNode(def, indent+2)
-			}
+			printLabelWithNodes(base, false, "Defaults:", nodesFromExprs(n.Defaults))
 		}
-		fmt.Printf("%s  Body:\n", prefix)
-		for _, stmt := range n.Body {
-			printNode(stmt, indent+2)
-		}
+		printLabelWithNodes(base, true, "Body:", nodesFromStmts(n.Body))
 
 	// Expressions
 	case *Name:
-		fmt.Printf("%sName(%s)\n", prefix, n.Id)
+		printHeader(prefix, isLast, fmt.Sprintf("Name(%s)", n.Id))
 
 	case *Constant:
-		fmt.Printf("%sConstant(%v)\n", prefix, n.Value)
+		printHeader(prefix, isLast, fmt.Sprintf("Constant(%v)", n.Value))
 
 	case *Subscript:
-		fmt.Printf("%sSubscript\n", prefix)
-		fmt.Printf("%s  Value:\n", prefix)
-		printNode(n.Value, indent+2)
-		fmt.Printf("%s  Index:\n", prefix)
-		printNode(n.Index, indent+2)
+		printHeader(prefix, isLast, "Subscript")
+		base := childPrefix(prefix, isLast)
+		printLabelWithNode(base, false, "Value:", n.Value)
+		printLabelWithNode(base, true, "Index:", n.Index)
 
 	case *Dict:
-		fmt.Printf("%sDict\n", prefix)
+		printHeader(prefix, isLast, "Dict")
+		base := childPrefix(prefix, isLast)
 		for i := range n.Keys {
-			fmt.Printf("%s  Key:\n", prefix)
-			printNode(n.Keys[i], indent+2)
-			fmt.Printf("%s  Value:\n", prefix)
-			printNode(n.Values[i], indent+2)
+			keyLast := i == len(n.Keys)-1
+			printLabelWithNode(base, !keyLast, "Key:", n.Keys[i])
+			printLabelWithNode(base, keyLast, "Value:", n.Values[i])
 		}
 
 	case *List:
-		fmt.Printf("%sList\n", prefix)
-		for _, elem := range n.Elements {
-			printNode(elem, indent+1)
-		}
+		printHeader(prefix, isLast, "List")
+		printLabelWithNodes(childPrefix(prefix, isLast), true, "Elements:", nodesFromExprs(n.Elements))
 
 	case *Tuple:
-		fmt.Printf("%sTuple\n", prefix)
-		for _, elem := range n.Elements {
-			printNode(elem, indent+1)
-		}
+		printHeader(prefix, isLast, "Tuple")
+		printLabelWithNodes(childPrefix(prefix, isLast), true, "Elements:", nodesFromExprs(n.Elements))
 
 	case *Call:
-		fmt.Printf("%sCall\n", prefix)
-		fmt.Printf("%s  Func:\n", prefix)
-		printNode(n.Func, indent+2)
+		printHeader(prefix, isLast, "Call")
+		base := childPrefix(prefix, isLast)
+		printLabelWithNode(base, len(n.Args) == 0, "Func:", n.Func)
 		if len(n.Args) > 0 {
-			fmt.Printf("%s  Args:\n", prefix)
-			for _, arg := range n.Args {
-				printNode(arg, indent+2)
-			}
+			printLabelWithNodes(base, true, "Args:", nodesFromExprs(n.Args))
 		}
 
 	case *Compare:
-		fmt.Printf("%sCompare (Op: %s)\n", prefix, n.Op)
-		fmt.Printf("%s  Left:\n", prefix)
-		printNode(n.Left, indent+2)
-		fmt.Printf("%s  Right:\n", prefix)
-		printNode(n.Comparator, indent+2)
+		printHeader(prefix, isLast, fmt.Sprintf("Compare (Op: %s)", n.Op))
+		base := childPrefix(prefix, isLast)
+		printLabelWithNode(base, false, "Left:", n.Left)
+		printLabelWithNode(base, true, "Right:", n.Comparator)
 
 	case *Assign:
-		fmt.Printf("%sAssign\n", prefix)
-		fmt.Printf("%s  Target:\n", prefix)
-		printNode(n.Target, indent+2)
-		fmt.Printf("%s  Value:\n", prefix)
-		printNode(n.Value, indent+2)
+		printHeader(prefix, isLast, "Assign")
+		base := childPrefix(prefix, isLast)
+		printLabelWithNode(base, false, "Target:", n.Target)
+		printLabelWithNode(base, true, "Value:", n.Value)
 
 	case *BinOp:
-		fmt.Printf("%sBinOp (Op: %s)\n", prefix, n.Op)
-		fmt.Printf("%s  Left:\n", prefix)
-		printNode(n.Left, indent+2)
-		fmt.Printf("%s  Right:\n", prefix)
-		printNode(n.Right, indent+2)
+		printHeader(prefix, isLast, fmt.Sprintf("BinOp (Op: %s)", n.Op))
+		base := childPrefix(prefix, isLast)
+		printLabelWithNode(base, false, "Left:", n.Left)
+		printLabelWithNode(base, true, "Right:", n.Right)
 
 	case *UnaryOp:
-		fmt.Printf("%sUnaryOp (Op: %s)\n", prefix, n.Op)
-		printNode(n.Expr, indent+1)
+		printHeader(prefix, isLast, fmt.Sprintf("UnaryOp (Op: %s)", n.Op))
+		printLabelWithNode(childPrefix(prefix, isLast), true, "Expr:", n.Expr)
 
 	case *BoolOp:
-		fmt.Printf("%sBoolOp (Op: %s)\n", prefix, n.Op)
-		fmt.Printf("%s  Left:\n", prefix)
-		printNode(n.Left, indent+2)
-		fmt.Printf("%s  Right:\n", prefix)
-		printNode(n.Right, indent+2)
+		printHeader(prefix, isLast, fmt.Sprintf("BoolOp (Op: %s)", n.Op))
+		base := childPrefix(prefix, isLast)
+		printLabelWithNode(base, false, "Left:", n.Left)
+		printLabelWithNode(base, true, "Right:", n.Right)
 
 	default:
-		fmt.Printf("%s<unknown node: %T>\n", prefix, node)
+		printHeader(prefix, isLast, fmt.Sprintf("<unknown node: %T>", node))
 	}
+}
+
+// helpers to convert specific typed slices into []Node for printing
+func nodesFromStmts(stmts []Stmt) []Node {
+	nodes := make([]Node, len(stmts))
+	for i := range stmts {
+		nodes[i] = stmts[i]
+	}
+	return nodes
+}
+
+func nodesFromExprs(exprs []Expr) []Node {
+	nodes := make([]Node, len(exprs))
+	for i := range exprs {
+		nodes[i] = exprs[i]
+	}
+	return nodes
 }

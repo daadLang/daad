@@ -71,4 +71,6 @@ func Execute() {
 func init() {
 	rootCmd.AddCommand(tokenizeCmd)
 	rootCmdAr.AddCommand(tokenizeCmdAr)
+	rootCmd.AddCommand(astCmd)
+	rootCmdAr.AddCommand(astCmdAr)
 }
