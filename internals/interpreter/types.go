@@ -78,6 +78,36 @@ type BoolValue struct {
 
 func (BoolValue) Type() ValueType { return BoolType }
 
+type ListValue struct {
+	Elements []Value
+}
+
+func (ListValue) Type() ValueType { return ListType }
+
+func (l ListValue) Len() int {
+	return len(l.Elements)
+}
+
+type TupleValue struct {
+	Elements []Value
+}
+
+func (TupleValue) Type() ValueType { return TupleType }
+
+func (t TupleValue) Len() int {
+	return len(t.Elements)
+}
+
+type DictValue struct {
+	Entries map[interface{}]Value
+}
+
+func (DictValue) Type() ValueType { return DictType }
+
+func (d DictValue) Len() int {
+	return len(d.Entries)
+}
+
 type NoneValue struct{}
 
 func (NoneValue) Type() ValueType { return NoneType }
