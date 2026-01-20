@@ -2,15 +2,16 @@ package interpreter
 
 import (
 	ast "github.com/daadLang/daad/internals/ast"
+	"github.com/daadLang/daad/internals/lexer"
 )
 
 func (i *Interpreter) execIfStmt(stmt *ast.IfStmt) {
 	cond := i.execExpr(stmt.Test)
-	condBool, ok := cond.(bool)
+	condBool, ok := cond.(BoolValue)
 	if !ok {
-		panic("if condition must be a boolean")
+		panic(newRuntimeError("if condition must be a boolean, got %T", cond))
 	}
-	if condBool {
+	if condBool.V {
 		for _, s := range stmt.Body {
 			i.execStmt(s)
 		}
@@ -23,14 +24,21 @@ func (i *Interpreter) execIfStmt(stmt *ast.IfStmt) {
 
 func (i *Interpreter) execForStmt(stmt *ast.ForStmt) {
 	iterable := i.execExpr(stmt.Iter)
-	iterableSlice, ok := iterable.([]Value)
-	if !ok {
-		panic("for loop iterable must be a slice")
+
+	var items []Value
+	switch iter := iterable.(type) {
+	case ListValue:
+		items = iter.Elements
+	case TupleValue:
+		items = iter.Elements
+	default:
+		panic(newRuntimeError("for loop iterable must be a list or tuple, got %T", iterable))
 	}
-	for _, item := range iterableSlice {
+
+	for _, item := range items {
 		targetName, ok := stmt.Target.(*ast.Name)
 		if !ok {
-			panic("for loop target must be a variable name")
+			panic(newRuntimeError("for loop target must be a variable name"))
 		}
 		i.env.Set(targetName.Id, item)
 		for _, s := range stmt.Body {
@@ -42,11 +50,11 @@ func (i *Interpreter) execForStmt(stmt *ast.ForStmt) {
 func (i *Interpreter) execWhileStmt(stmt *ast.WhileStmt) {
 	for {
 		cond := i.execExpr(stmt.Test)
-		condBool, ok := cond.(bool)
+		condBool, ok := cond.(BoolValue)
 		if !ok {
-			panic("while condition must be a boolean")
+			panic(newRuntimeError("while condition must be a boolean, got %T", cond))
 		}
-		if !condBool {
+		if !condBool.V {
 			break
 		}
 		for _, s := range stmt.Body {
@@ -63,6 +71,44 @@ func (i *Interpreter) execReturnStmt(stmt *ast.ReturnStmt) Signal {
 	}
 }
 
+func (i *Interpreter) execAugmentedAssignStmt(stmt *ast.AugmentedAssignStmt) {
+	targetName, ok := stmt.Target.(*ast.Name)
+	if !ok {
+		panic(newRuntimeError("augmented assignment target must be a variable name"))
+	}
+
+	currentValue := i.env.Get(targetName.Id)
+	operandValue := i.execExpr(stmt.Value)
+
+	binOp := &ast.BinOp{
+		Left:  &ast.Constant{Value: extractRawValue(currentValue)},
+		Right: &ast.Constant{Value: extractRawValue(operandValue)},
+		Op:    augOpToBinOp(stmt.Op),
+	}
+
+	result := i.execBinOpExpr(binOp)
+	i.env.Set(targetName.Id, result)
+}
+
+func augOpToBinOp(op lexer.TokenType) lexer.TokenType {
+	switch op {
+	case lexer.PLUS_ASSIGN:
+		return lexer.PLUS
+	case lexer.MINUS_ASSIGN:
+		return lexer.MINUS
+	case lexer.MULT_ASSIGN:
+		return lexer.MULT
+	case lexer.DIVIDE_ASSIGN:
+		return lexer.DIVIDE
+	case lexer.MOD_ASSIGN:
+		return lexer.MOD
+	case lexer.POWER_ASSIGN:
+		return lexer.POWER
+	default:
+		panic(newRuntimeError("unknown augmented assignment operator: %v", op))
+	}
+}
+
 func (i *Interpreter) execFunctionDefStmt(stmt *ast.FunctionDefStmt) {
 	funcValue := &FunctionValue{
 		Name:     stmt.Name,
@@ -75,8 +121,7 @@ func (i *Interpreter) execFunctionDefStmt(stmt *ast.FunctionDefStmt) {
 }
 
 func (i *Interpreter) execCallExpr(expr *ast.Call) Value {
-	// Get the function being called
-	funcValue := i.execExpr(expr.Func)
+	funcValue := i.execExpr(expr.Func) // function name
 	if funcValue == nil {
 		panic("undefined function")
 	}
@@ -85,7 +130,7 @@ func (i *Interpreter) execCallExpr(expr *ast.Call) Value {
 		panic("called object is not a function")
 	}
 
-	// Evaluate all argument expressions to get their values
+	//  handle args
 	args := make([]Value, len(expr.Args))
 	for idx, argExpr := range expr.Args {
 		args[idx] = i.execExpr(argExpr)
