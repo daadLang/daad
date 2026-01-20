@@ -183,8 +183,7 @@ func (l *Lexer) readName() string {
 func (l *Lexer) readString() string {
 	l.clearBuffer()
 	str_delimiter := l.peek()
-	l.advance() // skip the first one
-
+	l.advance() // skip the first quote
 	// ? multiline string
 	if l.peek() == str_delimiter {
 		l.advance() // skip 2
@@ -208,10 +207,14 @@ func (l *Lexer) readString() string {
 					l.advance()
 				}
 			}
-			return l.getBuffer()
+			raw := l.getBuffer()
+			if len(raw) >= 6 {
+				return raw[3 : len(raw)-3]
+			}
+			return ""
 		}
-		// Empty string: "" or ''
-		return string(str_delimiter) + string(str_delimiter)
+		// empty string: "" or ''
+		return ""
 	}
 
 	// read until """ (or ''')
@@ -233,7 +236,11 @@ func (l *Lexer) readString() string {
 			l.advance()
 		}
 	}
-	return l.getBuffer()
+	raw := l.getBuffer()
+	if len(raw) >= 2 {
+		return raw[1 : len(raw)-1]
+	}
+	return ""
 }
 
 func (l *Lexer) readComment() string {

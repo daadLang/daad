@@ -7,6 +7,9 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/daadLang/daad/internals/interpreter"
+	"github.com/daadLang/daad/internals/lexer"
+	"github.com/daadLang/daad/internals/parser"
 	"github.com/spf13/cobra"
 )
 
@@ -20,9 +23,8 @@ var rootCmd = &cobra.Command{
 			cmd.Help()
 			return
 		}
+		runInterpreter(args[0])
 
-		fmt.Println("Coming soon...")
-		fmt.Printf("File: %s\n", args[0])
 	},
 }
 
@@ -36,9 +38,7 @@ var rootCmdAr = &cobra.Command{
 			cmd.Help()
 			return
 		}
-
-		fmt.Println("قريباً...")
-		fmt.Printf("الملف: %s\n", args[0])
+		runInterpreter(args[0])
 	},
 }
 
@@ -73,4 +73,26 @@ func init() {
 	rootCmdAr.AddCommand(tokenizeCmdAr)
 	rootCmd.AddCommand(astCmd)
 	rootCmdAr.AddCommand(astCmdAr)
+}
+
+func runInterpreter(filePath string) {
+	// check if file exists
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		fmt.Fprintf(os.Stderr, "Error: File '%s' does not exist\n", filePath)
+		os.Exit(1)
+	}
+
+	// ast the file
+	tokens, err := lexer.Tokenize(filePath)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error tokenizing file: %v\n", err)
+		os.Exit(1)
+	}
+
+	p := parser.NewParser(tokens)
+	module := p.Parse()
+
+	i := interpreter.NewInterpreter()
+	i.Run(&module)
+
 }
