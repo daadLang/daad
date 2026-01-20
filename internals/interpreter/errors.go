@@ -1,6 +1,10 @@
 package interpreter
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/daadLang/daad/internals/lexer"
+)
 
 type RuntimeError struct {
 	Message string
@@ -31,16 +35,16 @@ func newTypeError(format string, args ...interface{}) *TypeError {
 }
 
 type UnsupportedOperationError struct {
-	Op    string
+	Op    lexer.TokenType
 	Left  interface{}
 	Right interface{}
 }
 
 func (e *UnsupportedOperationError) Error() string {
-	return fmt.Sprintf("TypeError: unsupported operand type(s) for %s: '%T' and '%T'", e.Op, e.Left, e.Right)
+	return fmt.Sprintf("TypeError: unsupported operand type(s) for %s: '%T' and '%T'", e.Op.String(), e.Left, e.Right)
 }
 
-func newUnsupportedOperationError(op string, left, right interface{}) *UnsupportedOperationError {
+func newUnsupportedOperationError(op lexer.TokenType, left, right interface{}) *UnsupportedOperationError {
 	return &UnsupportedOperationError{
 		Op:    op,
 		Left:  left,
