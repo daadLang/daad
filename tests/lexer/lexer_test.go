@@ -113,7 +113,7 @@ func TestTokenizeControlFlow(t *testing.T) {
 		{Type: lexer.INDENT, Value: ""},
 		{Type: lexer.NAME, Value: "اطبع"},
 		{Type: lexer.LPAREN, Value: "("},
-		{Type: lexer.STRING, Value: "\"كبير\""},
+		{Type: lexer.STRING, Value: "كبير"},
 		{Type: lexer.RPAREN, Value: ")"},
 		{Type: lexer.NEWLINE, Value: "\n"},
 
@@ -127,7 +127,7 @@ func TestTokenizeControlFlow(t *testing.T) {
 		{Type: lexer.INDENT, Value: ""},
 		{Type: lexer.NAME, Value: "اطبع"},
 		{Type: lexer.LPAREN, Value: "("},
-		{Type: lexer.STRING, Value: "\"صغير\""},
+		{Type: lexer.STRING, Value: "صغير"},
 		{Type: lexer.RPAREN, Value: ")"},
 		{Type: lexer.NEWLINE, Value: "\n"},
 
@@ -255,31 +255,31 @@ func TestTokenizeStrings(t *testing.T) {
 		// اسم = "محمد"
 		{Type: lexer.NAME, Value: "اسم"},
 		{Type: lexer.ASSIGN, Value: "="},
-		{Type: lexer.STRING, Value: "\"محمد\""},
+		{Type: lexer.STRING, Value: "محمد"},
 		{Type: lexer.NEWLINE, Value: "\n"},
 
 		// رسالة = 'مرحبا بك'
 		{Type: lexer.NAME, Value: "رسالة"},
 		{Type: lexer.ASSIGN, Value: "="},
-		{Type: lexer.STRING, Value: "'مرحبا بك'"},
+		{Type: lexer.STRING, Value: "مرحبا بك"},
 		{Type: lexer.NEWLINE, Value: "\n"},
 
 		// نص_متعدد = """..."""
 		{Type: lexer.NAME, Value: "نص_متعدد"},
 		{Type: lexer.ASSIGN, Value: "="},
-		{Type: lexer.STRING, Value: "\"\"\"\nهذا نص\nمتعدد الأسطر\nيحتوي على عدة أسطر\n\"\"\""},
+		{Type: lexer.STRING, Value: "\nهذا نص\nمتعدد الأسطر\nيحتوي على عدة أسطر\n"},
 		{Type: lexer.NEWLINE, Value: "\n"},
 
 		// فارغ = ""
 		{Type: lexer.NAME, Value: "فارغ"},
 		{Type: lexer.ASSIGN, Value: "="},
-		{Type: lexer.STRING, Value: "\"\""},
+		{Type: lexer.STRING, Value: ""},
 		{Type: lexer.NEWLINE, Value: "\n"},
 
 		// فارغ2 = ''
 		{Type: lexer.NAME, Value: "فارغ2"},
 		{Type: lexer.ASSIGN, Value: "="},
-		{Type: lexer.STRING, Value: "''"},
+		{Type: lexer.STRING, Value: ""},
 		{Type: lexer.NEWLINE, Value: "\n"},
 
 		{Type: lexer.EOF, Value: ""},

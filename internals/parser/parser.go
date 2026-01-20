@@ -1,9 +1,27 @@
 package parser
 
 import (
+	"strconv"
+	"strings"
+
 	ast "github.com/daadLang/daad/internals/ast"
 	"github.com/daadLang/daad/internals/lexer"
 )
+
+func parseNumber(s string) interface{} {
+	if strings.Contains(s, ".") {
+		f, err := strconv.ParseFloat(s, 64)
+		if err != nil {
+			panic("invalid number literal: " + s)
+		}
+		return f
+	}
+	i, err := strconv.Atoi(s)
+	if err != nil {
+		panic("invalid number literal: " + s)
+	}
+	return i
+}
 
 type Parser struct {
 	Tokens []lexer.Token
@@ -506,7 +524,7 @@ func (p *Parser) parseAtom() ast.Expr {
 
 	case lexer.NUMBER:
 		p.advance()
-		return &ast.Constant{Value: token.Value}
+		return &ast.Constant{Value: parseNumber(token.Value)}
 
 	case lexer.STRING:
 		p.advance()
