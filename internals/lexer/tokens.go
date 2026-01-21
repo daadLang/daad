@@ -36,6 +36,9 @@ const (
 	REPEAT // new feature
 	TIMES  // new feature
 
+	IMPORT // TODO
+	AS     // TODO
+
 	// Operators
 
 	// Arithmetic operators
@@ -55,6 +58,10 @@ const (
 	DIVIDE_ASSIGN // /=
 	MOD_ASSIGN    // %=
 	POWER_ASSIGN  // **=
+
+	// Increment and Decrement
+	INCREMENT // ++
+	DECREMENT // --
 
 	// Comparison operators
 	EQ      // ==
@@ -120,6 +127,8 @@ var tokenTypeNames = map[TokenType]string{
 	CONTINUE: "CONTINUE",
 	REPEAT:   "REPEAT",
 	TIMES:    "TIMES",
+	IMPORT:   "IMPORT",
+	AS:       "AS",
 
 	PLUS:     "PLUS",
 	MINUS:    "MINUS",
@@ -136,6 +145,9 @@ var tokenTypeNames = map[TokenType]string{
 	DIVIDE_ASSIGN: "DIVIDE_ASSIGN",
 	MOD_ASSIGN:    "MOD_ASSIGN",
 	POWER_ASSIGN:  "POWER_ASSIGN",
+
+	INCREMENT: "INCREMENT",
+	DECREMENT: "DECREMENT",
 
 	EQ:      "EQ",
 	NEQ:     "NEQ",
@@ -196,6 +208,11 @@ var keywords = map[string]TokenType{
 
 	"كرر":  REPEAT, // repeat N times
 	"مرات": TIMES,
+
+	"استورد": IMPORT,
+	"كـ":     AS, // كـ → ك
+	"ك":      AS,
+	"باسم":   AS,
 
 	"ارجع": RETURN, // أرجع → ارجع
 	"دالة": FUNC,

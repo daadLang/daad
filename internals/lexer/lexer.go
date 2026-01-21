@@ -328,6 +328,10 @@ func (l *Lexer) NextToken() Token {
 			l.advance()
 			return Token{Type: PLUS_ASSIGN, Value: "+="}
 		}
+		if l.peek() == '+' {
+			l.advance()
+			return Token{Type: INCREMENT, Value: "++"}
+		}
 		return Token{Type: PLUS, Value: "+"}
 	case '-':
 		l.advance()
@@ -338,6 +342,10 @@ func (l *Lexer) NextToken() Token {
 		if l.peek() == '>' {
 			l.advance()
 			return Token{Type: RETTYPE, Value: "->"}
+		}
+		if l.peek() == '-' {
+			l.advance()
+			return Token{Type: DECREMENT, Value: "--"}
 		}
 		return Token{Type: MINUS, Value: "-"}
 	case '*':

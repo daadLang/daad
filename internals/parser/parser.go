@@ -481,6 +481,15 @@ func (p *Parser) parsePrimary() ast.Expr {
 
 	for {
 		switch p.peek().Type {
+		case lexer.INCREMENT:
+			// x++ (postfix)
+			p.advance()
+			atom = &ast.UnaryOp{Op: lexer.INCREMENT, Expr: atom}
+
+		case lexer.DECREMENT:
+			// x-- (postfix)
+			p.advance()
+			atom = &ast.UnaryOp{Op: lexer.DECREMENT, Expr: atom}
 		case lexer.LPAREN:
 			// Function call
 			p.advance()
