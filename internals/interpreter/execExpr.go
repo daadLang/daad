@@ -286,3 +286,72 @@ func (i *Interpreter) execTupleExpr(e *ast.Tuple) Value {
 	}
 	return TupleValue{Elements: elements}
 }
+
+func (i *Interpreter) execCallExpr(expr *ast.Call) Value {
+	funcValue := i.execExpr(expr.Func)
+	if funcValue == nil {
+		panic(newRuntimeError("undefined function"))
+	}
+
+	// Evaluate all argument expressions
+	argValues := make([]Value, len(expr.Args))
+	for idx, argExpr := range expr.Args {
+		argValues[idx] = i.execExpr(argExpr)
+	}
+
+	switch fn := funcValue.(type) {
+	case *FunctionValue:
+		return i.callFunction(fn, argValues)
+	case *BuiltinValue:
+		result, err := fn.Fn(argValues)
+		if err != nil {
+			panic(newRuntimeError("%s", err.Error()))
+		}
+		return result
+	default:
+		panic(newTypeError("'%T' is not callable", funcValue))
+	}
+}
+
+func (i *Interpreter) callFunction(fn *FunctionValue, args []Value) Value {
+	if len(args) < fn.RequiredCount() {
+		panic(newRuntimeError("%s() missing %d required argument(s)",
+			fn.Name, fn.RequiredCount()-len(args)))
+	}
+	if len(args) > len(fn.Params) {
+		panic(newRuntimeError("%s() takes %d argument(s) but %d were given",
+			fn.Name, len(fn.Params), len(args)))
+	}
+
+	funcEnv := NewEnv(fn.Env)
+
+	// ? handle args
+	defaultsStart := len(fn.Params) - len(fn.Defaults)
+
+	for idx, paramName := range fn.Params {
+		if idx < len(args) {
+			funcEnv.Set(paramName, args[idx])
+		} else {
+
+			defaultIdx := idx - defaultsStart
+			funcEnv.Set(paramName, fn.Defaults[defaultIdx])
+		}
+	}
+
+	parentEnv := i.env
+	i.env = funcEnv
+
+	// Execute function body
+	var result Value = NoneValue{}
+	for _, stmt := range fn.Body {
+		signal := i.execStmt(stmt)
+		if signal.SignalType == ReturnSignal {
+			result = signal.Value
+			break
+		}
+	}
+
+	i.env = parentEnv
+
+	return result
+}

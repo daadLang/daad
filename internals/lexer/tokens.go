@@ -74,8 +74,7 @@ const (
 	// Logical operators
 	AND // و
 	OR  // أو
-	NOT // ليس , لا
-
+	NOT // ليس , لا, !
 	// Bitwise operators
 	BITWISE_AND // &
 	BITWISE_OR  // |

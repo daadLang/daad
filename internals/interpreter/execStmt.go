@@ -110,35 +110,17 @@ func augOpToBinOp(op lexer.TokenType) lexer.TokenType {
 }
 
 func (i *Interpreter) execFunctionDefStmt(stmt *ast.FunctionDefStmt) {
+	defaults := make([]Value, len(stmt.Defaults))
+	for idx, defaultExpr := range stmt.Defaults {
+		defaults[idx] = i.execExpr(defaultExpr)
+	}
+
 	funcValue := &FunctionValue{
 		Name:     stmt.Name,
-		Args:     stmt.Args,
-		Defaults: stmt.Defaults,
+		Params:   stmt.Args, // arg names
+		Defaults: defaults,  //default values
 		Body:     stmt.Body,
 		Env:      i.env,
 	}
 	i.env.Set(stmt.Name, funcValue)
-}
-
-func (i *Interpreter) execCallExpr(expr *ast.Call) Value {
-	funcValue := i.execExpr(expr.Func) // function name
-	if funcValue == nil {
-		panic("undefined function")
-	}
-	fv, ok := funcValue.(*FunctionValue)
-	if !ok {
-		panic("called object is not a function")
-	}
-
-	//  handle args
-	args := make([]Value, len(expr.Args))
-	for idx, argExpr := range expr.Args {
-		args[idx] = i.execExpr(argExpr)
-	}
-
-	result, err := fv.Call(args)
-	if err != nil {
-		panic(err.Error())
-	}
-	return result
 }

@@ -396,7 +396,7 @@ func (l *Lexer) NextToken() Token {
 			l.advance()
 			return Token{Type: NEQ, Value: "!="}
 		}
-		return Token{Type: ILLEGAL, Value: "!"}
+		return Token{Type: NOT, Value: "!"}
 	case '<':
 		l.advance()
 		if l.peek() == '=' {

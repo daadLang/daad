@@ -118,17 +118,16 @@ type Callable interface {
 
 type FunctionValue struct {
 	Name     string
-	Args     []string
-	Defaults []ast.Expr
+	Params   []string // arg names
+	Defaults []Value  // default values for the LAST N args
 	Body     []ast.Stmt
 	Env      *Env // closure
 }
 
 func (*FunctionValue) Type() ValueType { return FunctionType }
 
-func (f *FunctionValue) Call(args []Value) (Value, error) {
-	// TODO: create new env , insert the args, execute body, handle return
-	return nil, nil
+func (f *FunctionValue) RequiredCount() int {
+	return len(f.Params) - len(f.Defaults)
 }
 
 type BuiltinFunction func(args []Value) (Value, error)
@@ -139,8 +138,3 @@ type BuiltinValue struct {
 }
 
 func (*BuiltinValue) Type() ValueType { return BuiltinType }
-
-func (b *BuiltinValue) Call(args []Value) (Value, error) {
-	// TODO: better args handling (default values, None ...)
-	return b.Fn(args)
-}
