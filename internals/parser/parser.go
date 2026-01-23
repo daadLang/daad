@@ -494,15 +494,44 @@ func (p *Parser) parsePrimary() ast.Expr {
 			// Function call
 			p.advance()
 			var args []ast.Expr
-			if p.peek().Type != lexer.RPAREN {
-				args = append(args, p.parseExpression())
-				for p.peek().Type == lexer.COMMA {
-					p.advance()
+			var kwargs []ast.Kwarg
+			seenKeyword := false
+
+			for p.peek().Type != lexer.RPAREN {
+				// check if : NAME = expr (kwarg)
+				if p.peek().Type == lexer.NAME {
+					name := p.peek().Value
+					p.advance() // consume NAME
+
+					if p.peek().Type == lexer.ASSIGN {
+						p.advance() // consume =
+						value := p.parseExpression()
+						kwargs = append(kwargs, ast.Kwarg{Name: name, Value: value})
+						seenKeyword = true
+					} else {
+						p.Pos-- // go back to NAME
+
+						if seenKeyword {
+							panic("positional argument follows keyword argument")
+						}
+						args = append(args, p.parseExpression())
+					}
+				} else {
+					// Not a NAME, must be positional
+					if seenKeyword {
+						panic("positional argument follows keyword argument")
+					}
 					args = append(args, p.parseExpression())
+				}
+
+				if p.peek().Type == lexer.COMMA {
+					p.advance()
+				} else {
+					break
 				}
 			}
 			p.expectAndAdvance(lexer.RPAREN)
-			atom = &ast.Call{Func: atom, Args: args}
+			atom = &ast.Call{Func: atom, Args: args, Kwargs: kwargs}
 
 		case lexer.LBRACKET:
 			// Subscript

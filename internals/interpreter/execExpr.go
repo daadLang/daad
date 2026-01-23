@@ -293,17 +293,24 @@ func (i *Interpreter) execCallExpr(expr *ast.Call) Value {
 		panic(newRuntimeError("undefined function"))
 	}
 
-	// Evaluate all argument expressions
-	argValues := make([]Value, len(expr.Args))
+	// Evaluate positional arguments
+	posArgs := make([]Value, len(expr.Args))
 	for idx, argExpr := range expr.Args {
-		argValues[idx] = i.execExpr(argExpr)
+		posArgs[idx] = i.execExpr(argExpr)
+	}
+
+	// Evaluate keyword arguments
+	kwArgs := make(map[string]Value)
+	for _, kw := range expr.Kwargs {
+		kwArgs[kw.Name] = i.execExpr(kw.Value)
 	}
 
 	switch fn := funcValue.(type) {
 	case *FunctionValue:
-		return i.callFunction(fn, argValues)
+		return i.callFunction(fn, posArgs, kwArgs)
 	case *BuiltinValue:
-		result, err := fn.Fn(argValues)
+		// Builtins only support positional args for now
+		result, err := fn.Fn(posArgs)
 		if err != nil {
 			panic(newRuntimeError("%s", err.Error()))
 		}
@@ -313,29 +320,56 @@ func (i *Interpreter) execCallExpr(expr *ast.Call) Value {
 	}
 }
 
-func (i *Interpreter) callFunction(fn *FunctionValue, args []Value) Value {
-	if len(args) < fn.RequiredCount() {
-		panic(newRuntimeError("%s() missing %d required argument(s)",
-			fn.Name, fn.RequiredCount()-len(args)))
-	}
-	if len(args) > len(fn.Params) {
-		panic(newRuntimeError("%s() takes %d argument(s) but %d were given",
-			fn.Name, len(fn.Params), len(args)))
+func (i *Interpreter) callFunction(fn *FunctionValue, posArgs []Value, kwArgs map[string]Value) Value {
+	// Build a map of param name -> index for quick lookup
+	paramIndex := make(map[string]int)
+	for idx, name := range fn.Params {
+		paramIndex[name] = idx
 	}
 
-	funcEnv := NewEnv(fn.Env)
+	// Create array to hold final argument values (nil means not set)
+	finalArgs := make([]Value, len(fn.Params))
 
-	// ? handle args
-	defaultsStart := len(fn.Params) - len(fn.Defaults)
-
-	for idx, paramName := range fn.Params {
-		if idx < len(args) {
-			funcEnv.Set(paramName, args[idx])
-		} else {
-
-			defaultIdx := idx - defaultsStart
-			funcEnv.Set(paramName, fn.Defaults[defaultIdx])
+	// 1. Fill in positional arguments
+	for idx, val := range posArgs {
+		if idx >= len(fn.Params) {
+			panic(newRuntimeError("%s() takes %d argument(s) but %d positional were given",
+				fn.Name, len(fn.Params), len(posArgs)))
 		}
+		finalArgs[idx] = val
+	}
+
+	// 2. Fill in keyword arguments
+	for name, val := range kwArgs {
+		idx, exists := paramIndex[name]
+		if !exists {
+			panic(newRuntimeError("%s() got unexpected keyword argument '%s'", fn.Name, name))
+		}
+		if finalArgs[idx] != nil {
+			panic(newRuntimeError("%s() got multiple values for argument '%s'", fn.Name, name))
+		}
+		finalArgs[idx] = val
+	}
+
+	// 3. Fill in defaults for any remaining nil values
+	defaultsStart := len(fn.Params) - len(fn.Defaults)
+	for idx := range finalArgs {
+		if finalArgs[idx] == nil {
+			defaultIdx := idx - defaultsStart
+			if defaultIdx >= 0 && defaultIdx < len(fn.Defaults) {
+				finalArgs[idx] = fn.Defaults[defaultIdx]
+			} else {
+				// No value and no default - error
+				panic(newRuntimeError("%s() missing required argument '%s'",
+					fn.Name, fn.Params[idx]))
+			}
+		}
+	}
+
+	// Create function environment and bind arguments
+	funcEnv := NewEnv(fn.Env)
+	for idx, paramName := range fn.Params {
+		funcEnv.Set(paramName, finalArgs[idx])
 	}
 
 	parentEnv := i.env

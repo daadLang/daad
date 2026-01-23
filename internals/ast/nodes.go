@@ -182,10 +182,16 @@ type BoolOp struct {
 
 func (*BoolOp) exprNode() {}
 
+type Kwarg struct {
+	Name  string
+	Value Expr
+}
+
 // Call represents a function call expression (e.g., func(args))
 type Call struct {
-	Func Expr
-	Args []Expr
+	Func   Expr
+	Args   []Expr  // positional args (e.g., func(1, 2))
+	Kwargs []Kwarg // keyword args (name=value)
 }
 
 func (*Call) exprNode() {}
