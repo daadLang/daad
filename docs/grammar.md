@@ -117,7 +117,7 @@ for_stmt        ::= "لكل" NAME "في" expression ":" suite
 
 ### 3.4 Repeat Statement (Syntactic Sugar)
 ```ebnf
-repeat_stmt     ::= "كرر" expression "مرات" ":" suite
+repeat_stmt     ::= "كرر" expression ("مرات" | "مرة") ":" suite
 
 # Equivalent to: لكل _ في مدى(expression): suite
 ```
@@ -146,7 +146,7 @@ suite           ::= NEWLINE INDENT statement+ DEDENT
 ```ebnf
 expression      ::= or_expr
 
-or_expr         ::= and_expr ("أو" and_expr | "او" and_expr)*
+or_expr         ::= and_expr ("أو" and_expr)*
 
 and_expr        ::= not_expr ("و" not_expr)*
 

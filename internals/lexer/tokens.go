@@ -207,6 +207,7 @@ var keywords = map[string]TokenType{
 
 	"كرر":  REPEAT, // repeat N times
 	"مرات": TIMES,
+	"مرة":  TIMES,
 
 	"استورد": IMPORT,
 	"كـ":     AS, // كـ → ك
