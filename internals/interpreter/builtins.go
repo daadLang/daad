@@ -21,15 +21,35 @@ var formatters = map[string]string{
 
 // RegisterBuiltins adds all builtin functions to the environment
 func RegisterBuiltins(env *Env) {
+	// i/o functions
 	env.Set("اطبع", &BuiltinValue{Name: "اطبع", Fn: builtinPrint, Variadic: true})
+	env.Set("ادخل", &BuiltinValue{Name: "ادخل", Fn: builtinInput, Variadic: true})
+
+	// formatting functions
+	env.Set("نسق", &BuiltinValue{Name: "نسق", Fn: builtinFormat, Variadic: true})
+
+	// array options
 	env.Set("طول", &BuiltinValue{Name: "طول", Fn: builtinLen, Variadic: false})
+
+	// list manipulation builtins
+	// English: append
+	env.Set("اضف", &BuiltinValue{Name: "اضف", Fn: builtinAppend, Variadic: false})
+	// English: push
+	env.Set("ادفع", &BuiltinValue{Name: "ادفع", Fn: builtinPush, Variadic: false})
+	// English: pop
+	env.Set("ازل", &BuiltinValue{Name: "ازل", Fn: builtinPop, Variadic: false})
+	// English: copy
+	env.Set("انسخ", &BuiltinValue{Name: "انسخ", Fn: builtinCopy, Variadic: false})
+	// English: clear
+	env.Set("افرغ", &BuiltinValue{Name: "افرغ", Fn: builtinClear, Variadic: false})
+
+	// type conversion functions
 	env.Set("نوع", &BuiltinValue{Name: "نوع", Fn: builtinType, Variadic: false})
+
 	env.Set("نطاق", &BuiltinValue{Name: "نطاق", Fn: builtinRange, Variadic: true})
 	env.Set("صحيح", &BuiltinValue{Name: "صحيح", Fn: builtinInt, Variadic: false})
 	env.Set("عشري", &BuiltinValue{Name: "عشري", Fn: builtinFloat, Variadic: false})
 	env.Set("نص", &BuiltinValue{Name: "نص", Fn: builtinStr, Variadic: false})
-	env.Set("ادخل", &BuiltinValue{Name: "ادخل", Fn: builtinInput, Variadic: true})
-	env.Set("نسق", &BuiltinValue{Name: "نسق", Fn: builtinFormat, Variadic: true})
 }
 
 // Print function: اطبع
@@ -86,12 +106,12 @@ func builtinPrint(args []Value, kwargs map[string]Value) (Value, error) {
 
 func builtinFormat(args []Value, kwargs map[string]Value) (Value, error) {
 	if len(args) < 1 {
-		return nil, fmt.Errorf("نسق() requires at least 1 argument")
+		return nil, fmt.Errorf("نسق() تتطلب على الأقل معامل واحد")
 	}
 
 	formatStr, ok := args[0].(StringValue)
 	if !ok {
-		return nil, fmt.Errorf("نسق() first argument must be a string")
+		return nil, fmt.Errorf("المعامل الأول لـ نسق() يجب أن يكون نصاً")
 	}
 
 	result, err := formatString(formatStr.V, args[1:])
@@ -302,7 +322,7 @@ func getRawValue(val Value) interface{} {
 
 func builtinLen(args []Value, kwargs map[string]Value) (Value, error) {
 	if len(args) != 1 {
-		return nil, fmt.Errorf("طول() takes exactly 1 argument (%d given)", len(args))
+		return nil, fmt.Errorf("طول() تتطلب بالضبط معامل واحد (%d معطى)", len(args))
 	}
 
 	switch v := args[0].(type) {
@@ -315,14 +335,89 @@ func builtinLen(args []Value, kwargs map[string]Value) (Value, error) {
 	case DictValue:
 		return IntValue{V: len(v.Entries)}, nil
 	default:
-		return nil, fmt.Errorf("طول() argument must be a sequence, got %T", args[0])
+		return nil, fmt.Errorf("معامل طول() يجب أن يكون تسلسلاً (نص/قائمة/صف/قاموس)، لكن حصلنا على %T", args[0])
 	}
+}
+
+// append(list, elem) -> returns a new list with elem appended
+func builtinAppend(args []Value, kwargs map[string]Value) (Value, error) {
+	if len(args) != 2 {
+		return nil, fmt.Errorf("اضف() تتطلب بالضبط معاملين (%d معطى)", len(args))
+	}
+
+	lst, ok := args[0].(ListValue)
+	if !ok {
+		return nil, fmt.Errorf("المعامل الأول لـ اضف() يجب أن يكون قائمة، حصلنا على %T", args[0])
+	}
+
+	newElems := make([]Value, len(lst.Elements)+1)
+	copy(newElems, lst.Elements)
+	newElems[len(lst.Elements)] = args[1]
+
+	return ListValue{Elements: newElems}, nil
+}
+
+// push alias for append
+func builtinPush(args []Value, kwargs map[string]Value) (Value, error) {
+	return builtinAppend(args, kwargs)
+}
+
+// ازل(list) -> ترجع القائمة نفسها بدون العنصر الأخير
+func builtinPop(args []Value, kwargs map[string]Value) (Value, error) {
+	if len(args) != 1 {
+		return nil, fmt.Errorf("ازل() تتطلب بالضبط معامل واحد (%d معطى)", len(args))
+	}
+
+	lst, ok := args[0].(ListValue)
+	if !ok {
+		return nil, fmt.Errorf("المعامل لـ ازل() يجب أن يكون قائمة، حصلنا على %T", args[0])
+	}
+
+	if len(lst.Elements) == 0 {
+		return nil, fmt.Errorf("محاولة ازالة عنصر من قائمة فارغة")
+	}
+
+	lastIdx := len(lst.Elements) - 1
+	newElems := make([]Value, lastIdx)
+	copy(newElems, lst.Elements[:lastIdx])
+
+	return ListValue{Elements: newElems}, nil
+}
+
+// copy(list) -> shallow copy of list
+func builtinCopy(args []Value, kwargs map[string]Value) (Value, error) {
+	if len(args) != 1 {
+		return nil, fmt.Errorf("انسخ() تتطلب بالضبط معامل واحد (%d معطى)", len(args))
+	}
+
+	lst, ok := args[0].(ListValue)
+	if !ok {
+		return nil, fmt.Errorf("المعامل لـ انسخ() يجب أن يكون قائمة، حصلنا على %T", args[0])
+	}
+
+	newElems := make([]Value, len(lst.Elements))
+	copy(newElems, lst.Elements)
+	return ListValue{Elements: newElems}, nil
+}
+
+// clear(list) -> returns an empty list
+func builtinClear(args []Value, kwargs map[string]Value) (Value, error) {
+	if len(args) != 1 {
+		return nil, fmt.Errorf("افرغ() تتطلب بالضبط معامل واحد (%d معطى)", len(args))
+	}
+
+	_, ok := args[0].(ListValue)
+	if !ok {
+		return nil, fmt.Errorf("المعامل لـ افرغ() يجب أن يكون قائمة، حصلنا على %T", args[0])
+	}
+
+	return ListValue{Elements: []Value{}}, nil
 }
 
 // نوع - type function
 func builtinType(args []Value, kwargs map[string]Value) (Value, error) {
 	if len(args) != 1 {
-		return nil, fmt.Errorf("نوع() takes exactly 1 argument (%d given)", len(args))
+		return nil, fmt.Errorf("نوع() تتطلب بالضبط معامل واحد (%d معطى)", len(args))
 	}
 
 	var typeName string
@@ -365,13 +460,14 @@ func builtinRange(args []Value, kwargs map[string]Value) (Value, error) {
 		if v, ok := args[0].(IntValue); ok {
 			start, stop, step = 0, v.V, 1
 		} else {
-			return nil, fmt.Errorf("نطاق() argument must be integer")
+			return nil, fmt.Errorf("المعامل لـ نطاق() يجب أن يكون عددًا صحيحًا")
 		}
+
 	case 2:
 		v1, ok1 := args[0].(IntValue)
 		v2, ok2 := args[1].(IntValue)
 		if !ok1 || !ok2 {
-			return nil, fmt.Errorf("نطاق() arguments must be integers")
+			return nil, fmt.Errorf("معاملات نطاق() يجب أن تكون أعدادًا صحيحة")
 		}
 		start, stop, step = v1.V, v2.V, 1
 	case 3:
@@ -379,14 +475,14 @@ func builtinRange(args []Value, kwargs map[string]Value) (Value, error) {
 		v2, ok2 := args[1].(IntValue)
 		v3, ok3 := args[2].(IntValue)
 		if !ok1 || !ok2 || !ok3 {
-			return nil, fmt.Errorf("نطاق() arguments must be integers")
+			return nil, fmt.Errorf("معاملات نطاق() يجب أن تكون أعدادًا صحيحة")
 		}
 		start, stop, step = v1.V, v2.V, v3.V
 		if step == 0 {
-			return nil, fmt.Errorf("نطاق() step cannot be zero")
+			return nil, fmt.Errorf("قيمة الخطوة في نطاق() لا يمكن أن تكون صفرًا")
 		}
 	default:
-		return nil, fmt.Errorf("نطاق() takes 1 to 3 arguments (%d given)", len(args))
+		return nil, fmt.Errorf("نطاق() تتطلب من 1 إلى 3 معاملات (%d معطى)", len(args))
 	}
 
 	var elements []Value
@@ -405,7 +501,7 @@ func builtinRange(args []Value, kwargs map[string]Value) (Value, error) {
 
 func builtinInt(args []Value, kwargs map[string]Value) (Value, error) {
 	if len(args) != 1 {
-		return nil, fmt.Errorf("صحيح() takes exactly 1 argument (%d given)", len(args))
+		return nil, fmt.Errorf("صحيح() تتطلب بالضبط معامل واحد (%d معطى)", len(args))
 	}
 
 	switch v := args[0].(type) {
@@ -416,7 +512,7 @@ func builtinInt(args []Value, kwargs map[string]Value) (Value, error) {
 	case StringValue:
 		i, err := strconv.Atoi(strings.TrimSpace(v.V))
 		if err != nil {
-			return nil, fmt.Errorf("صحيح() cannot convert '%s' to integer", v.V)
+			return nil, fmt.Errorf("صحيح() لا يمكن تحويل '%s' إلى عدد صحيح", v.V)
 		}
 		return IntValue{V: i}, nil
 	case BoolValue:
@@ -425,13 +521,13 @@ func builtinInt(args []Value, kwargs map[string]Value) (Value, error) {
 		}
 		return IntValue{V: 0}, nil
 	default:
-		return nil, fmt.Errorf("صحيح() cannot convert %T to integer", args[0])
+		return nil, fmt.Errorf("صحيح() لا يمكن تحويل %T إلى عدد صحيح", args[0])
 	}
 }
 
 func builtinFloat(args []Value, kwargs map[string]Value) (Value, error) {
 	if len(args) != 1 {
-		return nil, fmt.Errorf("عشري() takes exactly 1 argument (%d given)", len(args))
+		return nil, fmt.Errorf("عشري() تتطلب بالضبط معامل واحد (%d معطى)", len(args))
 	}
 
 	switch v := args[0].(type) {
@@ -442,17 +538,17 @@ func builtinFloat(args []Value, kwargs map[string]Value) (Value, error) {
 	case StringValue:
 		f, err := strconv.ParseFloat(strings.TrimSpace(v.V), 64)
 		if err != nil {
-			return nil, fmt.Errorf("عشري() cannot convert '%s' to float", v.V)
+			return nil, fmt.Errorf("عشري() لا يمكن تحويل '%s' إلى عدد عشري", v.V)
 		}
 		return FloatValue{V: f}, nil
 	default:
-		return nil, fmt.Errorf("عشري() cannot convert %T to float", args[0])
+		return nil, fmt.Errorf("عشري() لا يمكن تحويل %T إلى عدد عشري", args[0])
 	}
 }
 
 func builtinStr(args []Value, kwargs map[string]Value) (Value, error) {
 	if len(args) != 1 {
-		return nil, fmt.Errorf("نص() takes exactly 1 argument (%d given)", len(args))
+		return nil, fmt.Errorf("نص() تتطلب بالضبط معامل واحد (%d معطى)", len(args))
 	}
 
 	return StringValue{V: valueToString(args[0])}, nil
