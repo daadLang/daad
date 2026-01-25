@@ -9,8 +9,10 @@ type Interpreter struct {
 }
 
 func NewInterpreter() *Interpreter {
+	env := NewEnv(nil)
+	RegisterBuiltins(env)
 	return &Interpreter{
-		env: NewEnv(nil),
+		env: env,
 	}
 }
 
