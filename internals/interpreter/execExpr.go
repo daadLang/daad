@@ -309,8 +309,7 @@ func (i *Interpreter) execCallExpr(expr *ast.Call) Value {
 	case *FunctionValue:
 		return i.callFunction(fn, posArgs, kwArgs)
 	case *BuiltinValue:
-		// Builtins only support positional args for now
-		result, err := fn.Fn(posArgs)
+		result, err := fn.Fn(posArgs, kwArgs)
 		if err != nil {
 			panic(newRuntimeError("%s", err.Error()))
 		}
@@ -320,17 +319,19 @@ func (i *Interpreter) execCallExpr(expr *ast.Call) Value {
 	}
 }
 
+// ===========================================================================
+// ===========================================================================
 func (i *Interpreter) callFunction(fn *FunctionValue, posArgs []Value, kwArgs map[string]Value) Value {
-	// Build a map of param name -> index for quick lookup
+	// build a map of param name -> index for quick lookup
 	paramIndex := make(map[string]int)
 	for idx, name := range fn.Params {
 		paramIndex[name] = idx
 	}
 
-	// Create array to hold final argument values (nil means not set)
+	// create array to hold final argument values (nil means not set)
 	finalArgs := make([]Value, len(fn.Params))
 
-	// 1. Fill in positional arguments
+	// fill in positional arguments
 	for idx, val := range posArgs {
 		if idx >= len(fn.Params) {
 			panic(newRuntimeError("%s() takes %d argument(s) but %d positional were given",
@@ -339,7 +340,7 @@ func (i *Interpreter) callFunction(fn *FunctionValue, posArgs []Value, kwArgs ma
 		finalArgs[idx] = val
 	}
 
-	// 2. Fill in keyword arguments
+	// fill in keyword arguments
 	for name, val := range kwArgs {
 		idx, exists := paramIndex[name]
 		if !exists {
@@ -351,7 +352,7 @@ func (i *Interpreter) callFunction(fn *FunctionValue, posArgs []Value, kwArgs ma
 		finalArgs[idx] = val
 	}
 
-	// 3. Fill in defaults for any remaining nil values
+	// fill in defaults for any remaining nil values
 	defaultsStart := len(fn.Params) - len(fn.Defaults)
 	for idx := range finalArgs {
 		if finalArgs[idx] == nil {
@@ -366,7 +367,6 @@ func (i *Interpreter) callFunction(fn *FunctionValue, posArgs []Value, kwArgs ma
 		}
 	}
 
-	// Create function environment and bind arguments
 	funcEnv := NewEnv(fn.Env)
 	for idx, paramName := range fn.Params {
 		funcEnv.Set(paramName, finalArgs[idx])
@@ -375,7 +375,7 @@ func (i *Interpreter) callFunction(fn *FunctionValue, posArgs []Value, kwArgs ma
 	parentEnv := i.env
 	i.env = funcEnv
 
-	// Execute function body
+	// execute function body
 	var result Value = NoneValue{}
 	for _, stmt := range fn.Body {
 		signal := i.execStmt(stmt)

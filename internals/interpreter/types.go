@@ -130,11 +130,12 @@ func (f *FunctionValue) RequiredCount() int {
 	return len(f.Params) - len(f.Defaults)
 }
 
-type BuiltinFunction func(args []Value) (Value, error)
+type BuiltinFunc func(args []Value, kwargs map[string]Value) (Value, error)
 
 type BuiltinValue struct {
-	Name string
-	Fn   BuiltinFunction
+	Name     string
+	Fn       BuiltinFunc
+	Variadic bool // true if accepts variable number of args
 }
 
 func (*BuiltinValue) Type() ValueType { return BuiltinType }
