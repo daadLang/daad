@@ -34,25 +34,30 @@ func (i *Interpreter) execStmt(stmt ast.Stmt) Signal {
 	switch e := stmt.(type) {
 	case *ast.ExprStmt:
 		i.execExpr(e.Value)
+		return NewNoSignal()
 	case *ast.IfStmt:
-		i.execIfStmt(e)
+		return i.execIfStmt(e)
 	case *ast.ForStmt:
-		i.execForStmt(e)
+		return i.execForStmt(e)
 	case *ast.WhileStmt:
-		i.execWhileStmt(e)
+		return i.execWhileStmt(e)
 	case *ast.AssignStmt:
 		value := i.execExpr(e.Value)
 		i.env.Set(e.Target.Id, value)
+		return NewNoSignal()
 	case *ast.AugmentedAssignStmt:
-		i.execAugmentedAssignStmt(e)
+		return i.execAugmentedAssignStmt(e)
 	case *ast.FunctionDefStmt:
-		i.execFunctionDefStmt(e)
+		return i.execFunctionDefStmt(e)
 	case *ast.ReturnStmt:
 		return i.execReturnStmt(e)
+	case *ast.BreakStmt:
+		return NewBreakSignal()
+	case *ast.ContinueStmt:
+		return NewContinueSignal()
 	default:
 		panic(newRuntimeError("unknown statement: %T", stmt))
 	}
-	return Signal{SignalType: NoSignal}
 }
 
 func (i *Interpreter) execExpr(expr ast.Expr) Value {
