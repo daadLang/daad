@@ -377,12 +377,9 @@ func (i *Interpreter) callFunction(fn *FunctionValue, posArgs []Value, kwArgs ma
 
 	// execute function body
 	var result Value = NoneValue{}
-	for _, stmt := range fn.Body {
-		signal := i.execStmt(stmt)
-		if signal.SignalType == ReturnSignal {
-			result = signal.Value
-			break
-		}
+	sig := i.execBlock(fn.Body)
+	if sig.IsReturn() {
+		result = sig.Value
 	}
 
 	i.env = parentEnv

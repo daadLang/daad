@@ -5,24 +5,39 @@ import (
 	"github.com/daadLang/daad/internals/lexer"
 )
 
-func (i *Interpreter) execIfStmt(stmt *ast.IfStmt) {
+// execBlock executes a sequence of statements and returns the first non-NoSignal
+// signal it encounters. If all statements execute normally it returns NewNoSignal().
+func (i *Interpreter) execBlock(stmts []ast.Stmt) Signal {
+	for _, s := range stmts {
+		sig := i.execStmt(s)
+		if sig.Type != NoSignal {
+			return sig
+		}
+	}
+	return NewNoSignal()
+}
+
+func (i *Interpreter) execIfStmt(stmt *ast.IfStmt) Signal {
 	cond := i.execExpr(stmt.Test)
 	condBool, ok := cond.(BoolValue)
 	if !ok {
 		panic(newRuntimeError("if condition must be a boolean, got %T", cond))
 	}
 	if condBool.V {
-		for _, s := range stmt.Body {
-			i.execStmt(s)
+		sig := i.execBlock(stmt.Body)
+		if sig.Type != NoSignal {
+			return sig
 		}
 	} else {
-		for _, s := range stmt.Orelse {
-			i.execStmt(s)
+		sig := i.execBlock(stmt.Orelse)
+		if sig.Type != NoSignal {
+			return sig
 		}
 	}
+	return NewNoSignal()
 }
 
-func (i *Interpreter) execForStmt(stmt *ast.ForStmt) {
+func (i *Interpreter) execForStmt(stmt *ast.ForStmt) Signal {
 	iterable := i.execExpr(stmt.Iter)
 
 	var items []Value
@@ -41,13 +56,32 @@ func (i *Interpreter) execForStmt(stmt *ast.ForStmt) {
 			panic(newRuntimeError("for loop target must be a variable name"))
 		}
 		i.env.Set(targetName.Id, item)
-		for _, s := range stmt.Body {
-			i.execStmt(s)
+		sig := i.execBlock(stmt.Body)
+		if sig.IsReturn() || sig.IsError() {
+			return sig
+		}
+		if sig.IsBreak() {
+			// consume break: exit loop normally
+			return NewNoSignal()
+		}
+		if sig.IsContinue() {
+			// start next iteration
+			continue
 		}
 	}
+	// run orelse when loop completes normally
+	if len(stmt.Orelse) > 0 {
+		sig := i.execBlock(stmt.Orelse)
+		if sig.Type != NoSignal {
+			return sig
+		}
+	}
+
+	return NewNoSignal()
+
 }
 
-func (i *Interpreter) execWhileStmt(stmt *ast.WhileStmt) {
+func (i *Interpreter) execWhileStmt(stmt *ast.WhileStmt) Signal {
 	for {
 		cond := i.execExpr(stmt.Test)
 		condBool, ok := cond.(BoolValue)
@@ -57,21 +91,35 @@ func (i *Interpreter) execWhileStmt(stmt *ast.WhileStmt) {
 		if !condBool.V {
 			break
 		}
-		for _, s := range stmt.Body {
-			i.execStmt(s)
+		sig := i.execBlock(stmt.Body)
+		if sig.IsReturn() || sig.IsError() {
+			return sig
+		}
+		if sig.IsBreak() {
+			return NewNoSignal()
+		}
+		if sig.IsContinue() {
+			continue
 		}
 	}
+
+	// run orelse when while completes normally
+	if len(stmt.Orelse) > 0 {
+		sig := i.execBlock(stmt.Orelse)
+		if sig.Type != NoSignal {
+			return sig
+		}
+	}
+
+	return NewNoSignal()
 }
 
 func (i *Interpreter) execReturnStmt(stmt *ast.ReturnStmt) Signal {
 	value := i.execExpr(stmt.Value)
-	return Signal{
-		SignalType: ReturnSignal,
-		Value:      value,
-	}
+	return NewReturnSignal(value)
 }
 
-func (i *Interpreter) execAugmentedAssignStmt(stmt *ast.AugmentedAssignStmt) {
+func (i *Interpreter) execAugmentedAssignStmt(stmt *ast.AugmentedAssignStmt) Signal {
 	targetName, ok := stmt.Target.(*ast.Name)
 	if !ok {
 		panic(newRuntimeError("augmented assignment target must be a variable name"))
@@ -88,6 +136,7 @@ func (i *Interpreter) execAugmentedAssignStmt(stmt *ast.AugmentedAssignStmt) {
 
 	result := i.execBinOpExpr(binOp)
 	i.env.Set(targetName.Id, result)
+	return NewNoSignal()
 }
 
 func augOpToBinOp(op lexer.TokenType) lexer.TokenType {
@@ -109,7 +158,7 @@ func augOpToBinOp(op lexer.TokenType) lexer.TokenType {
 	}
 }
 
-func (i *Interpreter) execFunctionDefStmt(stmt *ast.FunctionDefStmt) {
+func (i *Interpreter) execFunctionDefStmt(stmt *ast.FunctionDefStmt) Signal {
 	defaults := make([]Value, len(stmt.Defaults))
 	for idx, defaultExpr := range stmt.Defaults {
 		defaults[idx] = i.execExpr(defaultExpr)
@@ -123,4 +172,5 @@ func (i *Interpreter) execFunctionDefStmt(stmt *ast.FunctionDefStmt) {
 		Env:      i.env,
 	}
 	i.env.Set(stmt.Name, funcValue)
+	return NewNoSignal()
 }
