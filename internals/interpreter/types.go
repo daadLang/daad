@@ -16,6 +16,7 @@ const (
 	FunctionType
 	BuiltinType
 	NoneType
+	ClassType
 )
 
 type Value interface{}
@@ -139,3 +140,21 @@ type BuiltinValue struct {
 }
 
 func (*BuiltinValue) Type() ValueType { return BuiltinType }
+
+// OOP
+
+type ClassValue struct {
+	Name       string
+	Attributes map[string]Value // class attributes and methods
+}
+
+func (*ClassValue) Type() ValueType { return ClassType }
+
+type ObjectValue struct {
+	Class      *ClassValue
+	Attributes map[string]Value // instance attributes
+}
+
+func (*ObjectValue) Type() ValueType { return ClassType }
+
+// End OOP

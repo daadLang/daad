@@ -314,8 +314,74 @@ func (i *Interpreter) execCallExpr(expr *ast.Call) Value {
 			panic(newRuntimeError("%s", err.Error()))
 		}
 		return result
+	case *ClassValue:
+		// instantiate object
+		obj := &ObjectValue{Class: fn, Attributes: map[string]Value{}}
+
+		// copy non-callable class attributes as initial instance attributes
+		for name, v := range fn.Attributes {
+			switch v.(type) {
+			case *FunctionValue:
+				// methods are accessed via attribute lookup and will be bound
+			default:
+				obj.Attributes[name] = v
+			}
+		}
+
+		// run constructor if present
+		if ctorVal, ok := fn.Attributes["__بناء__"]; ok {
+			if ctorFn, ok := ctorVal.(*FunctionValue); ok {
+				// call constructor with instance as first arg
+				args := make([]Value, 0, len(posArgs)+1)
+				args = append(args, obj)
+				args = append(args, posArgs...)
+				// callFunction returns Value
+				i.callFunction(ctorFn, args, kwArgs)
+			}
+		}
+
+		return obj
 	default:
 		panic(newTypeError("'%T' is not callable", funcValue))
+	}
+}
+
+// Attribute access: obj.attr
+func (i *Interpreter) execAttributeExpr(e *ast.Attribute) Value {
+	container := i.execExpr(e.Value)
+
+	switch c := container.(type) {
+	case *ObjectValue:
+		// check instance attributes first
+		if v, ok := c.Attributes[e.Attr]; ok {
+			return v
+		}
+		// then class attributes (methods or defaults)
+		if v, ok := c.Class.Attributes[e.Attr]; ok {
+			// if it's a function, bind it to the instance
+			if fn, ok := v.(*FunctionValue); ok {
+				// return a builtin that will call the function with instance as first arg
+				bound := &BuiltinValue{Name: fn.Name, Variadic: false}
+				bound.Fn = func(args []Value, kwargs map[string]Value) (Value, error) {
+					all := make([]Value, 0, len(args)+1)
+					all = append(all, c)
+					all = append(all, args...)
+					return i.callFunction(fn, all, kwargs), nil
+				}
+				return bound
+			}
+			return v
+		}
+		panic(newRuntimeError("attribute '%s' not found on instance of '%s'", e.Attr, c.Class.Name))
+
+	case *ClassValue:
+		if v, ok := c.Attributes[e.Attr]; ok {
+			return v
+		}
+		panic(newRuntimeError("attribute '%s' not found on class '%s'", e.Attr, c.Name))
+
+	default:
+		panic(newTypeError("'%T' has no attributes", container))
 	}
 }
 

@@ -39,6 +39,7 @@ const (
 	IMPORT // TODO
 	AS     // TODO
 
+	CLASS
 	// Operators
 
 	// Arithmetic operators
@@ -126,8 +127,11 @@ var tokenTypeNames = map[TokenType]string{
 	CONTINUE: "CONTINUE",
 	REPEAT:   "REPEAT",
 	TIMES:    "TIMES",
-	IMPORT:   "IMPORT",
-	AS:       "AS",
+
+	IMPORT: "IMPORT",
+	AS:     "AS",
+
+	CLASS: "CLASS",
 
 	PLUS:     "PLUS",
 	MINUS:    "MINUS",
@@ -213,6 +217,9 @@ var keywords = map[string]TokenType{
 	"كـ":     AS, // كـ → ك
 	"ك":      AS,
 	"باسم":   AS,
+
+	"فئة": CLASS, //  class
+	"صنف": CLASS,
 
 	"ارجع": RETURN, // أرجع → ارجع
 	"دالة": FUNC,

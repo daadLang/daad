@@ -83,6 +83,8 @@ func (p *Parser) parseStatement() ast.Stmt {
 		return p.parseRepeatStmt()
 	case lexer.FUNC:
 		return p.parseFunctionDef()
+	case lexer.CLASS:
+		return p.parseClassDef()
 
 	// Simple statements
 	case lexer.RETURN:
@@ -106,6 +108,54 @@ func (p *Parser) parseStatement() ast.Stmt {
 		// Could be: expr_stmt, assignment_stmt, or augmented_assign_stmt
 		return p.parseExprOrAssignStmt()
 	}
+}
+
+// OOP
+
+func (p *Parser) parseClassSuite() []ast.Stmt {
+	var stmts []ast.Stmt
+
+	// Skip newline before INDENT
+	if p.peek().Type == lexer.NEWLINE {
+		p.advance()
+	}
+
+	// Expect INDENT
+	if p.peek().Type == lexer.INDENT {
+		p.advance()
+
+		for p.peek().Type != lexer.DEDENT && p.peek().Type != lexer.EOF {
+			stmt := p.parseStatement()
+			if stmt != nil {
+				stmts = append(stmts, stmt)
+			}
+		}
+
+		// Consume DEDENT
+		if p.peek().Type == lexer.DEDENT {
+			p.advance()
+		}
+	} else {
+		// Single-line suite (simple_stmt NEWLINE)
+		stmt := p.parseStatement()
+		if stmt != nil {
+			stmts = append(stmts, stmt)
+		}
+	}
+
+	return stmts
+}
+
+func (p *Parser) parseClassDef() *ast.ClassDefStmt {
+	p.advance() // consume CLASS
+
+	nameToken := p.advance()
+	name := nameToken.Value
+
+	p.expectAndAdvance(lexer.COLON)
+	body := p.parseClassSuite()
+
+	return &ast.ClassDefStmt{Name: name, Body: body}
 }
 
 // parseExprOrAssignStmt handles expression statements, assignments, and augmented assignments

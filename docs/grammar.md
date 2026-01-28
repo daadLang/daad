@@ -6,7 +6,7 @@ This document defines the formal grammar for the **Daad (ض)** programming langu
 Daad is a Python-style, dynamically typed language with Arabic keywords.
 
 **Excluded features:**
-- Object-Oriented Programming (no classes, inheritance, methods)
+**Excluded features:**
 - Type annotations and type checking
 - Lambda expressions
 
@@ -259,6 +259,9 @@ tuple_expr      ::= "(" ")"
 صحيح           - True
 خطأ            - False
 عدم            - None
+صنف            - class
+ذاتي           - self (instance reference)
+__بناء__       - constructor (convention)
 ```
 
 ### 6.2 Operators
@@ -442,6 +445,26 @@ NEWLINE         - end of logical line
 تحية("أحمد")     # prints: مرحبا أحمد
 </code></pre>
 
+### Classes (Simple OOP)
+<pre dir="rtl"><code>صنف شخص:
+    دالة __بناء__(ذاتي, اسم, عمر=0):
+        ذاتي.اسم = اسم
+        ذاتي.عمر = عمر
+        اسم = "غير معروف"
+        عمر = 0
+
+        دالة __بناء__(ذاتي, اسم, عمر=0):
+            ذاتي.اسم = اسم
+            ذاتي.عمر = عمر
+
+        دالة تحية(ذاتي):
+            اطبع("مرحبا " + ذاتي.اسم)
+
+    # إنشاء مثال واستخدامه
+    س = شخص("أحمد", 30)
+    س.تحية()
+</code></pre>
+
 ### Collections
 <pre dir="rtl"><code># List
 قائمة = [1, 2, 3]
@@ -498,11 +521,46 @@ NEWLINE         - end of logical line
 
 ---
 
-## 10. Reserved for Future Versions
+
+## 10. Simple Object-Oriented Programming (OOP)
+
+This language includes a minimal, class-based OOP model without inheritance. The goal is to allow simple data containers and methods bound to instances.
+
+```ebnf
+class_def      ::= "صنف" NAME ":" class_suite
+
+# A class body (class_suite) is a block of class members: attributes and methods.
+class_suite    ::= NEWLINE INDENT class_member+ DEDENT
+
+class_member   ::= attribute
+                 | method_def
+
+attribute      ::= NAME ("=" value)?    # optional initializer
+
+# Values used for attribute initializers — allow expressions and common literals
+value          ::= expression
+
+# Methods inside a class use the existing function syntax; by convention the first parameter
+# that refers to the instance is named `ذاتي` (similar to `self`). Constructors are ordinary
+# methods named `__بناء__` (convention) and are invoked automatically when an instance is created.
+
+method_def     ::= "دالة" NAME "(" parameters? ")" ":" suite
+
+# Instantiation (constructing an instance) is done by calling the class name like a function:
+instantiation  ::= NAME "(" arguments? ")"
+
+# Attribute access and method calls use the existing `.` and call syntax: `obj.attr`, `obj.method()`
+```
+
+Notes:
+- `صنف` introduces a class; no inheritance or metaclass features are supported.
+- Use `ذاتي` inside methods to reference the current instance.
+- Define a constructor with `دالة __بناء__(ذاتي, ...)` if you want initialization.
+
+## 11. Reserved for Future Versions
 
 The following features are intentionally **NOT** included in this grammar and may be added in future versions:
 
-- **Classes and OOP**: `صنف` (class), inheritance, `ذاتي` (self)
 - **Type annotations**: `-> نوع`, parameter types
 - **Lambda expressions**: anonymous functions
 - **Decorators**: `@decorator` syntax
@@ -536,3 +594,6 @@ The following features are intentionally **NOT** included in this grammar and ma
 | TRUE           | صحيح                | True                |
 | FALSE          | خطأ                 | False               |
 | NONE           | عدم                 | None                |
+| CLASS          | صنف                 | class               |
+| SELF           | ذاتي                | self                |
+| CONSTRUCTOR    | __بناء__           | constructor (name)  |

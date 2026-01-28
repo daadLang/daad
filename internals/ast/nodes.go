@@ -111,6 +111,14 @@ func (*ContinueStmt) stmtNode() {}
 // ? EXPRESSIONS
 // ? ==========================================
 
+// Attribute represents attribute access: obj.attr
+type Attribute struct {
+	Value Expr // the object
+	Attr  string
+}
+
+func (*Attribute) exprNode() {}
+
 type Name struct {
 	Id string
 }
@@ -203,3 +211,10 @@ type Assign struct {
 }
 
 func (*Assign) exprNode() {}
+
+type ClassDefStmt struct {
+	Name string
+	Body []Stmt
+}
+
+func (*ClassDefStmt) stmtNode() {}

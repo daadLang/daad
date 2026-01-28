@@ -55,6 +55,7 @@ func (i *Interpreter) execStmt(stmt ast.Stmt) Signal {
 		return NewBreakSignal()
 	case *ast.ContinueStmt:
 		return NewContinueSignal()
+
 	default:
 		panic(newRuntimeError("unknown statement: %T", stmt))
 	}
