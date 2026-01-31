@@ -69,8 +69,9 @@ type ReturnStmt struct {
 func (*ReturnStmt) stmtNode() {}
 
 type RepeatStmt struct {
-	Times Expr
-	Body  []Stmt
+	Times  Expr
+	Body   []Stmt
+	Orelse []Stmt
 }
 
 func (*RepeatStmt) stmtNode() {}

@@ -39,6 +39,8 @@ func (i *Interpreter) execStmt(stmt ast.Stmt) Signal {
 		return i.execIfStmt(e)
 	case *ast.ForStmt:
 		return i.execForStmt(e)
+	case *ast.RepeatStmt:
+		return i.execRepeatStmt(e)
 	case *ast.WhileStmt:
 		return i.execWhileStmt(e)
 	case *ast.AssignStmt:

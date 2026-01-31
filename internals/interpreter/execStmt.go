@@ -81,6 +81,33 @@ func (i *Interpreter) execForStmt(stmt *ast.ForStmt) Signal {
 
 }
 
+func (i *Interpreter) execRepeatStmt(stmt *ast.RepeatStmt) Signal {
+	timesVal := i.execExpr(stmt.Times)
+	timesInt, ok := timesVal.(IntValue)
+	if !ok {
+		panic(newRuntimeError("repeat statement count must be an integer, got %T", timesVal))
+	}
+	for count := 0; count < int(timesInt.V); count++ {
+		sig := i.execBlock(stmt.Body)
+		if sig.IsReturn() || sig.IsError() {
+			return sig
+		}
+		if sig.IsBreak() {
+			return NewNoSignal()
+		}
+		if sig.IsContinue() {
+			continue
+		}
+	}
+	// run orelse when repeat completes normally
+	if len(stmt.Orelse) > 0 {
+		sig := i.execBlock(stmt.Orelse)
+		if sig.Type != NoSignal {
+			return sig
+		}
+	}
+	return NewNoSignal()
+}
 func (i *Interpreter) execWhileStmt(stmt *ast.WhileStmt) Signal {
 	for {
 		cond := i.execExpr(stmt.Test)

@@ -280,7 +280,7 @@ func (p *Parser) parseRepeatStmt() *ast.RepeatStmt {
 	p.expectAndAdvance(lexer.COLON)
 	body := p.parseSuite()
 
-	return &ast.RepeatStmt{Times: times, Body: body}
+	return &ast.RepeatStmt{Times: times, Body: body, Orelse: nil}
 }
 
 func (p *Parser) parseFunctionDef() *ast.FunctionDefStmt {
