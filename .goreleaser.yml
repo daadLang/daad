@@ -7,8 +7,8 @@ release:
 
 builds:
   - id: daad
-    main: ./cmd/server
-    binary: gts
+    main: ./
+    binary: daad
     goos:
       - linux
       - windows
