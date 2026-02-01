@@ -25,7 +25,7 @@ builds:
       - -X github.com/daadLang/daad/internals/pkg.Version={{.Version}}
       - -X github.com/daadLang/daad/internals/pkg.GitCommit={{.ShortCommit}}
       - -X github.com/daadLang/daad/internals/pkg.BuildDate={{.Date}}
-      - -X github.com/daadLang/daad/internals/pkg.GoVersion={{.GoVersion}}
+      - -X github.com/daadLang/daad/internals/pkg.GoVersion=1.25
 
 archives:
   - id: daad-archive
