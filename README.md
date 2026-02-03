@@ -9,7 +9,7 @@
 [![Go](https://img.shields.io/badge/Go-1.25+-00ADD8?style=flat&logo=go)](https://go.dev/)
 [![License](https://img.shields.io/badge/الرخصة-apache%202.0-green.svg)](LICENSE)
 
-[التوثيق](daadlang.github.io/website/) · [الأمثلة](tests/examples/)
+[التوثيق](https://daadlang.github.io/website) · [الأمثلة](tests/examples/)
 
 </div>
 
