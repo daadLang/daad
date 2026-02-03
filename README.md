@@ -1,6 +1,6 @@
 <div dir="rtl" align="right">
 
-# ض - لغة برمجة عربية
+# ض - لغة برمجة باللغة العربية
 
 <div align="center">
 
