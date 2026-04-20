@@ -57,3 +57,28 @@ func TestParseOOPClassUsesAttributeNodes(t *testing.T) {
 		t.Fatalf("expected method call function to be Attribute, got %T", methodCall.Func)
 	}
 }
+
+func TestParseClassWithSingleInheritance(t *testing.T) {
+	tokens, err := lexer.TokenizeString("صنف ابن(اب):\n    دالة مرحبا(ذاتي):\n        ارجع 1\n")
+	if err != nil {
+		t.Fatalf("Failed to tokenize inheritance class: %v", err)
+	}
+
+	module := parser.NewParser(tokens).Parse()
+	if len(module.Body) != 1 {
+		t.Fatalf("expected one top-level statement, got %d", len(module.Body))
+	}
+
+	classDef, ok := module.Body[0].(*ast.ClassDefStmt)
+	if !ok {
+		t.Fatalf("expected ClassDefStmt, got %T", module.Body[0])
+	}
+
+	if classDef.Name != "ابن" {
+		t.Fatalf("expected class name ابن, got %s", classDef.Name)
+	}
+
+	if classDef.Parent != "اب" {
+		t.Fatalf("expected parent class اب, got %s", classDef.Parent)
+	}
+}

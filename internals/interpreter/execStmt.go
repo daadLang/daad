@@ -204,6 +204,16 @@ func (i *Interpreter) execFunctionDefStmt(stmt *ast.FunctionDefStmt) Signal {
 
 func (i *Interpreter) execClassDefStmt(stmt *ast.ClassDefStmt) Signal {
 	classAttributes := map[string]Value{}
+	var parentClass *ClassValue
+
+	if stmt.Parent != "" {
+		parentVal := i.env.Get(stmt.Parent)
+		resolvedParent, ok := parentVal.(*ClassValue)
+		if !ok {
+			panic(newRuntimeError("parent '%s' must be a class", stmt.Parent))
+		}
+		parentClass = resolvedParent
+	}
 
 	for _, bodyStmt := range stmt.Body {
 		switch s := bodyStmt.(type) {
@@ -234,6 +244,7 @@ func (i *Interpreter) execClassDefStmt(stmt *ast.ClassDefStmt) Signal {
 
 	i.env.Set(stmt.Name, &ClassValue{
 		Name:       stmt.Name,
+		Parent:     parentClass,
 		Attributes: classAttributes,
 	})
 	return NewNoSignal()

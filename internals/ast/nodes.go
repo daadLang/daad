@@ -214,8 +214,9 @@ type Assign struct {
 func (*Assign) exprNode() {}
 
 type ClassDefStmt struct {
-	Name string
-	Body []Stmt
+	Name   string
+	Parent string // optional single parent class name
+	Body   []Stmt
 }
 
 func (*ClassDefStmt) stmtNode() {}

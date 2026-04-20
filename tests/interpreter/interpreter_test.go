@@ -581,3 +581,82 @@ func TestBasicOOPClassInstantiationAndMethod(t *testing.T) {
 		t.Fatalf("expected direct attribute أحمد, got %v", nameDirect)
 	}
 }
+
+func TestSingleInheritanceAttributesAndMethodOverride(t *testing.T) {
+	module := &ast.Module{
+		Body: []ast.Stmt{
+			&ast.ClassDefStmt{
+				Name: "أب",
+				Body: []ast.Stmt{
+					&ast.ExprStmt{
+						Value: &ast.Assign{
+							Target: &ast.Name{Id: "نوع"},
+							Value:  &ast.Constant{Value: "أب"},
+						},
+					},
+					&ast.FunctionDefStmt{
+						Name: "قل",
+						Args: []string{"ذاتي"},
+						Body: []ast.Stmt{
+							&ast.ReturnStmt{Value: &ast.Constant{Value: "أصل"}},
+						},
+					},
+				},
+			},
+			&ast.ClassDefStmt{
+				Name:   "ابن",
+				Parent: "أب",
+				Body: []ast.Stmt{
+					&ast.FunctionDefStmt{
+						Name: "قل",
+						Args: []string{"ذاتي"},
+						Body: []ast.Stmt{
+							&ast.ReturnStmt{Value: &ast.Constant{Value: "فرع"}},
+						},
+					},
+				},
+			},
+			&ast.ExprStmt{
+				Value: &ast.Assign{
+					Target: &ast.Name{Id: "كائن"},
+					Value: &ast.Call{
+						Func: &ast.Name{Id: "ابن"},
+					},
+				},
+			},
+			&ast.ExprStmt{
+				Value: &ast.Assign{
+					Target: &ast.Name{Id: "نتيجة_دالة"},
+					Value: &ast.Call{
+						Func: &ast.Attribute{
+							Value: &ast.Name{Id: "كائن"},
+							Attr:  "قل",
+						},
+					},
+				},
+			},
+			&ast.ExprStmt{
+				Value: &ast.Assign{
+					Target: &ast.Name{Id: "نتيجة_خاصية"},
+					Value: &ast.Attribute{
+						Value: &ast.Name{Id: "كائن"},
+						Attr:  "نوع",
+					},
+				},
+			},
+		},
+	}
+
+	interp := interpreter.NewInterpreter()
+	interp.Run(module)
+
+	methodResult := getRawValue(interp.GetVar("نتيجة_دالة"))
+	if methodResult != "فرع" {
+		t.Fatalf("expected overridden method result فرع, got %v", methodResult)
+	}
+
+	attrResult := getRawValue(interp.GetVar("نتيجة_خاصية"))
+	if attrResult != "أب" {
+		t.Fatalf("expected inherited attribute result أب, got %v", attrResult)
+	}
+}

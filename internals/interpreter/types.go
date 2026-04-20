@@ -145,6 +145,7 @@ func (*BuiltinValue) Type() ValueType { return BuiltinType }
 
 type ClassValue struct {
 	Name       string
+	Parent     *ClassValue
 	Attributes map[string]Value // class attributes and methods
 }
 

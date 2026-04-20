@@ -143,7 +143,7 @@ suite           ::= NEWLINE INDENT statement+ DEDENT
 
 ### 3.7 Class Definition (Minimal OOP)
 ```ebnf
-class_def       ::= "صنف" NAME ":" class_suite
+class_def       ::= "صنف" NAME ("(" NAME ")")? ":" class_suite
 
 class_suite     ::= NEWLINE INDENT class_member+ DEDENT
 
@@ -153,11 +153,11 @@ class_member    ::= function_def
 
 **Design scope (v1):**
 - ✅ class definition
+- ✅ single inheritance (`صنف Child(Parent):`)
 - ✅ object instantiation (`x = ClassName(...)`)
 - ✅ attributes via `obj.attr` and `obj.attr = value`
 - ✅ methods (regular functions inside class body)
-- ❌ inheritance
-- ❌ method overriding model
+- ✅ basic method overriding (child method name replaces parent method)
 - ❌ access modifiers (`public/private/protected`)
 
 ---
@@ -540,10 +540,10 @@ NEWLINE         - end of logical line
 
 ## 10. Simple Object-Oriented Programming (OOP)
 
-This language includes a minimal, class-based OOP model without inheritance. The goal is to allow simple data containers and methods bound to instances.
+This language includes a minimal, class-based OOP model with optional **single inheritance**. The goal is to allow simple data containers and methods bound to instances.
 
 ```ebnf
-class_def      ::= "صنف" NAME ":" class_suite
+class_def      ::= "صنف" NAME ("(" NAME ")")? ":" class_suite
 
 # A class body (class_suite) is a block of class members: attributes and methods.
 class_suite    ::= NEWLINE INDENT class_member+ DEDENT
@@ -569,9 +569,11 @@ instantiation  ::= NAME "(" arguments? ")"
 ```
 
 Notes:
-- `صنف` introduces a class; no inheritance or metaclass features are supported.
+- `صنف` introduces a class, and may optionally declare one parent class: `صنف ابن(أب):`.
+- Only single inheritance is supported.
 - Use `ذاتي` inside methods to reference the current instance.
 - Define a constructor with `دالة __بناء__(ذاتي, ...)` if you want initialization.
+- Overriding is name-based and simple: if child and parent both define the same method, the child version is used.
 
 ## 11. Reserved for Future Versions
 
