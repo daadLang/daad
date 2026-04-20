@@ -5,6 +5,27 @@ import (
 	"github.com/daadLang/daad/internals/lexer"
 )
 
+func lookupClassAttribute(class *ClassValue, name string) (Value, bool) {
+	for current := class; current != nil; current = current.Parent {
+		if v, ok := current.Attributes[name]; ok {
+			return v, true
+		}
+	}
+	return nil, false
+}
+
+func populateInitialInstanceAttributes(class *ClassValue, out map[string]Value) {
+	if class == nil {
+		return
+	}
+	populateInitialInstanceAttributes(class.Parent, out)
+	for name, v := range class.Attributes {
+		if _, isMethod := v.(*FunctionValue); !isMethod {
+			out[name] = v
+		}
+	}
+}
+
 func (i *Interpreter) execConstExpr(e *ast.Constant) Value {
 	switch v := e.Value.(type) {
 	case int:
@@ -328,18 +349,11 @@ func (i *Interpreter) execCallExpr(expr *ast.Call) Value {
 		// instantiate object
 		obj := &ObjectValue{Class: fn, Attributes: map[string]Value{}}
 
-		// copy non-callable class attributes as initial instance attributes
-		for name, v := range fn.Attributes {
-			switch v.(type) {
-			case *FunctionValue:
-				// methods are accessed via attribute lookup and will be bound
-			default:
-				obj.Attributes[name] = v
-			}
-		}
+		// copy non-callable class attributes from inheritance chain as initial instance attributes
+		populateInitialInstanceAttributes(fn, obj.Attributes)
 
-		// run constructor if present
-		if ctorVal, ok := fn.Attributes["__بناء__"]; ok {
+		// run constructor if present (child first, then parent fallback)
+		if ctorVal, ok := lookupClassAttribute(fn, "__بناء__"); ok {
 			if ctorFn, ok := ctorVal.(*FunctionValue); ok {
 				// call constructor with instance as first arg
 				args := make([]Value, 0, len(posArgs)+1)
@@ -366,8 +380,8 @@ func (i *Interpreter) execAttributeExpr(e *ast.Attribute) Value {
 		if v, ok := c.Attributes[e.Attr]; ok {
 			return v
 		}
-		// then class attributes (methods or defaults)
-		if v, ok := c.Class.Attributes[e.Attr]; ok {
+		// then class attributes (methods or defaults), following inheritance chain
+		if v, ok := lookupClassAttribute(c.Class, e.Attr); ok {
 			// if it's a function, bind it to the instance
 			if fn, ok := v.(*FunctionValue); ok {
 				// return a builtin that will call the function with instance as first arg
@@ -385,7 +399,7 @@ func (i *Interpreter) execAttributeExpr(e *ast.Attribute) Value {
 		panic(newRuntimeError("attribute '%s' not found on instance of '%s'", e.Attr, c.Class.Name))
 
 	case *ClassValue:
-		if v, ok := c.Attributes[e.Attr]; ok {
+		if v, ok := lookupClassAttribute(c, e.Attr); ok {
 			return v
 		}
 		panic(newRuntimeError("attribute '%s' not found on class '%s'", e.Attr, c.Name))

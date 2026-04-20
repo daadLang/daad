@@ -151,11 +151,21 @@ func (p *Parser) parseClassDef() *ast.ClassDefStmt {
 
 	nameToken := p.advance()
 	name := nameToken.Value
+	parent := ""
+
+	// Optional single inheritance: صنف Child(Parent):
+	if p.peek().Type == lexer.LPAREN {
+		p.advance() // consume LPAREN
+		if p.peek().Type == lexer.NAME {
+			parent = p.advance().Value
+		}
+		p.expectAndAdvance(lexer.RPAREN)
+	}
 
 	p.expectAndAdvance(lexer.COLON)
 	body := p.parseClassSuite()
 
-	return &ast.ClassDefStmt{Name: name, Body: body}
+	return &ast.ClassDefStmt{Name: name, Parent: parent, Body: body}
 }
 
 // parseExprOrAssignStmt handles expression statements, assignments, and augmented assignments
