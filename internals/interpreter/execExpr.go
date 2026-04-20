@@ -206,6 +206,16 @@ func (i *Interpreter) execAssignExpr(e *ast.Assign) Value {
 	switch target := e.Target.(type) {
 	case *ast.Name:
 		i.env.Set(target.Id, value)
+	case *ast.Attribute:
+		container := i.execExpr(target.Value)
+		switch c := container.(type) {
+		case *ObjectValue:
+			c.Attributes[target.Attr] = value
+		case *ClassValue:
+			c.Attributes[target.Attr] = value
+		default:
+			panic(newRuntimeError("invalid attribute assignment target: %T", target.Value))
+		}
 	default:
 		panic(newRuntimeError("invalid assignment target: %T", e.Target))
 	}

@@ -51,6 +51,8 @@ func (i *Interpreter) execStmt(stmt ast.Stmt) Signal {
 		return i.execAugmentedAssignStmt(e)
 	case *ast.FunctionDefStmt:
 		return i.execFunctionDefStmt(e)
+	case *ast.ClassDefStmt:
+		return i.execClassDefStmt(e)
 	case *ast.ReturnStmt:
 		return i.execReturnStmt(e)
 	case *ast.BreakStmt:
@@ -91,6 +93,9 @@ func (i *Interpreter) execExpr(expr ast.Expr) Value {
 
 	case *ast.Subscript:
 		return i.execSubscriptExpr(e)
+
+	case *ast.Attribute:
+		return i.execAttributeExpr(e)
 
 	case *ast.List:
 		return i.execListExpr(e)
