@@ -226,7 +226,7 @@ func (i *Interpreter) execClassDefStmt(stmt *ast.ClassDefStmt) Signal {
 			}
 			nameTarget, ok := assignExpr.Target.(*ast.Name)
 			if !ok {
-				panic(newRuntimeError("class attribute assignment target must be a variable name"))
+				panic(newRuntimeError("class-level attribute assignment requires a simple variable name as target"))
 			}
 			classAttributes[nameTarget.Id] = i.execExpr(assignExpr.Value)
 		}
