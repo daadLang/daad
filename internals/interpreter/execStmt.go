@@ -201,3 +201,40 @@ func (i *Interpreter) execFunctionDefStmt(stmt *ast.FunctionDefStmt) Signal {
 	i.env.Set(stmt.Name, funcValue)
 	return NewNoSignal()
 }
+
+func (i *Interpreter) execClassDefStmt(stmt *ast.ClassDefStmt) Signal {
+	classAttributes := map[string]Value{}
+
+	for _, bodyStmt := range stmt.Body {
+		switch s := bodyStmt.(type) {
+		case *ast.FunctionDefStmt:
+			defaults := make([]Value, len(s.Defaults))
+			for idx, defaultExpr := range s.Defaults {
+				defaults[idx] = i.execExpr(defaultExpr)
+			}
+			classAttributes[s.Name] = &FunctionValue{
+				Name:     s.Name,
+				Params:   s.Args,
+				Defaults: defaults,
+				Body:     s.Body,
+				Env:      i.env,
+			}
+		case *ast.ExprStmt:
+			assignExpr, ok := s.Value.(*ast.Assign)
+			if !ok {
+				continue
+			}
+			nameTarget, ok := assignExpr.Target.(*ast.Name)
+			if !ok {
+				panic(newRuntimeError("class attribute assignment target must be a variable name"))
+			}
+			classAttributes[nameTarget.Id] = i.execExpr(assignExpr.Value)
+		}
+	}
+
+	i.env.Set(stmt.Name, &ClassValue{
+		Name:       stmt.Name,
+		Attributes: classAttributes,
+	})
+	return NewNoSignal()
+}
