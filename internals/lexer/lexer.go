@@ -301,7 +301,7 @@ func (l *Lexer) NextToken() Token {
 		return Token{Type: EOF, Value: ""}
 	}
 
-	if unicode.IsLetter(r) {
+	if unicode.IsLetter(r) || r == '_' {
 		value := l.readName()
 		simplified := l.simplifyKeyword([]rune(value))
 		if _, ok := keywords[simplified]; ok {

@@ -44,6 +44,7 @@ compound_stmt   ::= if_stmt
                   | for_stmt
                   | repeat_stmt
                   | function_def
+                  | class_def
 ```
 
 ---
@@ -62,8 +63,10 @@ assignment_stmt ::= target "=" expression
 
 target          ::= NAME
                   | subscript
+                  | attribute
 
 subscript       ::= primary "[" expression "]"
+attribute       ::= primary "." NAME
 ```
 
 ### 2.3 Augmented Assignment
@@ -137,6 +140,25 @@ param           ::= NAME
 suite           ::= NEWLINE INDENT statement+ DEDENT
                   | simple_stmt NEWLINE
 ```
+
+### 3.7 Class Definition (Minimal OOP)
+```ebnf
+class_def       ::= "صنف" NAME ":" class_suite
+
+class_suite     ::= NEWLINE INDENT class_member+ DEDENT
+
+class_member    ::= function_def
+                  | assignment_stmt NEWLINE
+```
+
+**Design scope (v1):**
+- ✅ class definition
+- ✅ object instantiation (`x = ClassName(...)`)
+- ✅ attributes via `obj.attr` and `obj.attr = value`
+- ✅ methods (regular functions inside class body)
+- ❌ inheritance
+- ❌ method overriding model
+- ❌ access modifiers (`public/private/protected`)
 
 ---
 
@@ -450,19 +472,13 @@ NEWLINE         - end of logical line
     دالة __بناء__(ذاتي, اسم, عمر=0):
         ذاتي.اسم = اسم
         ذاتي.عمر = عمر
-        اسم = "غير معروف"
-        عمر = 0
 
-        دالة __بناء__(ذاتي, اسم, عمر=0):
-            ذاتي.اسم = اسم
-            ذاتي.عمر = عمر
+    دالة تحية(ذاتي):
+        اطبع("مرحبا " + ذاتي.اسم)
 
-        دالة تحية(ذاتي):
-            اطبع("مرحبا " + ذاتي.اسم)
-
-    # إنشاء مثال واستخدامه
-    س = شخص("أحمد", 30)
-    س.تحية()
+# إنشاء مثال واستخدامه
+س = شخص("أحمد", 30)
+س.تحية()
 </code></pre>
 
 ### Collections

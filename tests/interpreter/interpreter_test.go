@@ -500,3 +500,84 @@ func TestAugmentedAssignment(t *testing.T) {
 		})
 	}
 }
+
+func TestBasicOOPClassInstantiationAndMethod(t *testing.T) {
+	module := &ast.Module{
+		Body: []ast.Stmt{
+			&ast.ClassDefStmt{
+				Name: "شخص",
+				Body: []ast.Stmt{
+					&ast.FunctionDefStmt{
+						Name: "__بناء__",
+						Args: []string{"ذاتي", "اسم"},
+						Body: []ast.Stmt{
+							&ast.ExprStmt{
+								Value: &ast.Assign{
+									Target: &ast.Attribute{
+										Value: &ast.Name{Id: "ذاتي"},
+										Attr:  "الاسم",
+									},
+									Value: &ast.Name{Id: "اسم"},
+								},
+							},
+						},
+					},
+					&ast.FunctionDefStmt{
+						Name: "خذ_الاسم",
+						Args: []string{"ذاتي"},
+						Body: []ast.Stmt{
+							&ast.ReturnStmt{
+								Value: &ast.Attribute{
+									Value: &ast.Name{Id: "ذاتي"},
+									Attr:  "الاسم",
+								},
+							},
+						},
+					},
+				},
+			},
+			&ast.ExprStmt{
+				Value: &ast.Assign{
+					Target: &ast.Name{Id: "م"},
+					Value: &ast.Call{
+						Func: &ast.Name{Id: "شخص"},
+						Args: []ast.Expr{&ast.Constant{Value: "أحمد"}},
+					},
+				},
+			},
+			&ast.ExprStmt{
+				Value: &ast.Assign{
+					Target: &ast.Name{Id: "اسم_م"},
+					Value: &ast.Call{
+						Func: &ast.Attribute{
+							Value: &ast.Name{Id: "م"},
+							Attr:  "خذ_الاسم",
+						},
+					},
+				},
+			},
+			&ast.ExprStmt{
+				Value: &ast.Assign{
+					Target: &ast.Name{Id: "اسم_مباشر"},
+					Value: &ast.Attribute{
+						Value: &ast.Name{Id: "م"},
+						Attr:  "الاسم",
+					},
+				},
+			},
+		},
+	}
+
+	interp := interpreter.NewInterpreter()
+	interp.Run(module)
+
+	nameByMethod := getRawValue(interp.GetVar("اسم_م"))
+	if nameByMethod != "أحمد" {
+		t.Fatalf("expected method result أحمد, got %v", nameByMethod)
+	}
+
+	nameDirect := getRawValue(interp.GetVar("اسم_مباشر"))
+	if nameDirect != "أحمد" {
+		t.Fatalf("expected direct attribute أحمد, got %v", nameDirect)
+	}
+}

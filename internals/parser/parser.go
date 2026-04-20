@@ -594,7 +594,7 @@ func (p *Parser) parsePrimary() ast.Expr {
 			// Attribute access
 			p.advance()
 			attrToken := p.advance()
-			atom = &ast.Subscript{Value: atom, Index: &ast.Constant{Value: attrToken.Value}}
+			atom = &ast.Attribute{Value: atom, Attr: attrToken.Value}
 
 		default:
 			return atom
