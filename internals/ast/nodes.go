@@ -30,6 +30,26 @@ type Module struct {
 // ? ==========================================
 // ? STATEMENTS
 // ? ==========================================
+type Alias struct {
+	Name   string
+	AsName *string
+}
+
+type ImportStmt struct {
+	Module string
+	Names  []Alias
+}
+
+func (*ImportStmt) stmtNode() {}
+
+type FromImportStmt struct {
+	Module string
+	Names  []Alias
+	Level  int // 0 for absolute import, 1 for relative import (e.g., from . import module)
+}
+
+func (*FromImportStmt) stmtNode() {}
+
 type IfStmt struct {
 	Test   Expr
 	Body   []Stmt

@@ -33,9 +33,10 @@ const (
 	FUNC
 	BREAK
 	CONTINUE
-	REPEAT // new feature
-	TIMES  // new feature
+	REPEAT
+	TIMES
 
+	FROM   // TODO
 	IMPORT // TODO
 	AS     // TODO
 
@@ -102,6 +103,7 @@ const (
 	FALSE // خطأ
 )
 
+// we need this for debugging and testing
 var tokenTypeNames = map[TokenType]string{
 	EOF:     "EOF",
 	ILLEGAL: "ILLEGAL",
@@ -128,6 +130,7 @@ var tokenTypeNames = map[TokenType]string{
 	REPEAT:   "REPEAT",
 	TIMES:    "TIMES",
 
+	FROM:   "FROM",
 	IMPORT: "IMPORT",
 	AS:     "AS",
 
@@ -213,6 +216,7 @@ var keywords = map[string]TokenType{
 	"مرات": TIMES,
 	"مرة":  TIMES,
 
+	"من":     FROM,
 	"استورد": IMPORT,
 	"كـ":     AS, // كـ → ك
 	"ك":      AS,
