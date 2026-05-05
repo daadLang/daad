@@ -93,6 +93,10 @@ func (p *Parser) parseStatement() ast.Stmt {
 		return p.parseBreakStmt()
 	case lexer.CONTINUE:
 		return p.parseContinueStmt()
+	case lexer.IMPORT:
+		return p.parseImportStmt()
+	case lexer.FROM:
+		return p.parseFromImportStmt()
 
 	case lexer.NEWLINE:
 		p.advance() // skip empty lines
@@ -108,6 +112,89 @@ func (p *Parser) parseStatement() ast.Stmt {
 		// Could be: expr_stmt, assignment_stmt, or augmented_assign_stmt
 		return p.parseExprOrAssignStmt()
 	}
+}
+
+// parseFromImportStmt handles: من [./.../module] استورد names
+func (p *Parser) parseFromImportStmt() *ast.FromImportStmt {
+	p.advance() // consume 'من'
+
+	// Count relative import dots (e.g FROM ...[x] import y)
+	level := 0
+	for p.peek().Type == lexer.DOT {
+		level++
+		p.advance()
+	}
+
+	// Parse module name (could be empty for pure relative imports)
+	var moduleName string
+	if p.peek().Type == lexer.NAME {
+		moduleName = p.parseQualifiedName()
+	}
+
+	// Expect IMPORT (استورد)
+	if p.peek().Type != lexer.IMPORT {
+		panic("expected استورد in from-import statement")
+	}
+	p.advance() // consume IMPORT
+
+	// Parse imported names
+	var names []ast.Alias
+
+	for {
+		if p.peek().Type != lexer.NAME && p.peek().Type != lexer.MULT {
+			break
+		}
+
+		if p.peek().Type == lexer.MULT {
+			p.advance()
+			names = append(names, ast.Alias{Name: "*"})
+		} else {
+			names = append(names, p.parseImportAlias())
+		}
+
+		// Check for more imports
+		if p.peek().Type != lexer.COMMA {
+			break
+		}
+		p.advance() // consume COMMA
+	}
+
+	p.consumeNewline()
+	return &ast.FromImportStmt{Module: moduleName, Names: names, Level: level}
+}
+
+func (p *Parser) parseImportAlias() ast.Alias {
+	name := p.parseQualifiedName()
+	item := ast.Alias{Name: name}
+
+	if p.peek().Type == lexer.AS {
+		p.advance() // consume AS
+		if p.peek().Type != lexer.NAME {
+			panic("expected alias name after as")
+		}
+		aliasName := p.advance().Value
+		item.AsName = &aliasName
+	}
+
+	return item
+}
+
+func (p *Parser) parseQualifiedName() string {
+	if p.peek().Type != lexer.NAME {
+		panic("expected name")
+	}
+
+	parts := []string{p.advance().Value}
+
+	for p.peek().Type == lexer.DOT {
+		if p.Pos+1 >= len(p.Tokens) || p.Tokens[p.Pos+1].Type != lexer.NAME {
+			break
+		}
+		p.advance() // consume DOT
+		parts = append(parts, p.advance().Value)
+	}
+
+	return strings.Join(parts, ".")
 }
 
 // OOP
@@ -214,6 +301,23 @@ func (p *Parser) parseContinueStmt() *ast.ContinueStmt {
 	p.advance() // consume CONTINUE
 	p.consumeNewline()
 	return &ast.ContinueStmt{}
+}
+
+// parseImportStmt handles: استورد module [as alias]
+func (p *Parser) parseImportStmt() *ast.ImportStmt {
+	p.advance() // consume IMPORT (استورد)
+
+	var names []ast.Alias
+	for {
+		names = append(names, p.parseImportAlias())
+		if p.peek().Type != lexer.COMMA {
+			break
+		}
+		p.advance() // consume COMMA
+	}
+
+	p.consumeNewline()
+	return &ast.ImportStmt{Module: "", Names: names}
 }
 
 func (p *Parser) parseIfStmt() *ast.IfStmt {
