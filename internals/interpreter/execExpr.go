@@ -375,6 +375,12 @@ func (i *Interpreter) execAttributeExpr(e *ast.Attribute) Value {
 	container := i.execExpr(e.Value)
 
 	switch c := container.(type) {
+	case *ModuleValue:
+		if v, ok := c.Attributes[e.Attr]; ok {
+			return v
+		}
+		panic(newRuntimeError("attribute '%s' not found on module '%s'", e.Attr, c.Name))
+
 	case *ObjectValue:
 		// check instance attributes first
 		if v, ok := c.Attributes[e.Attr]; ok {

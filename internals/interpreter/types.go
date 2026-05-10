@@ -15,6 +15,7 @@ const (
 	DictType
 	FunctionType
 	BuiltinType
+	ModuleType
 	NoneType
 	ClassType
 )
@@ -140,6 +141,14 @@ type BuiltinValue struct {
 }
 
 func (*BuiltinValue) Type() ValueType { return BuiltinType }
+
+type ModuleValue struct {
+	Name       string
+	Path       string
+	Attributes map[string]Value
+}
+
+func (*ModuleValue) Type() ValueType { return ModuleType }
 
 // OOP
 

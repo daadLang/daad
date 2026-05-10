@@ -1,19 +1,46 @@
 package interpreter
 
 import (
+	"os"
+	"path/filepath"
+
 	ast "github.com/daadLang/daad/internals/ast"
 )
 
 type Interpreter struct {
-	env *Env
+	env            *Env
+	moduleCache    map[string]*ModuleValue
+	loadingModules map[string]bool // detect circular imports
+	sourceDir      string
+	currentDir     string
 }
 
 func NewInterpreter() *Interpreter {
 	env := NewEnv(nil)
 	RegisterBuiltins(env)
-	return &Interpreter{
-		env: env,
+
+	cwd, err := os.Getwd()
+	if err != nil {
+		cwd = "."
 	}
+
+	return &Interpreter{
+		env:            env,
+		moduleCache:    make(map[string]*ModuleValue),
+		loadingModules: make(map[string]bool),
+		sourceDir:      cwd,
+		currentDir:     cwd,
+	}
+}
+
+func (i *Interpreter) SetSourcePath(filePath string) {
+	abs, err := filepath.Abs(filePath)
+	if err != nil {
+		return
+	}
+	base := filepath.Dir(abs)
+	i.sourceDir = base
+	i.currentDir = base
 }
 
 func (i *Interpreter) SetVar(name string, value Value) {
@@ -35,6 +62,10 @@ func (i *Interpreter) execStmt(stmt ast.Stmt) Signal {
 	case *ast.ExprStmt:
 		i.execExpr(e.Value)
 		return NewNoSignal()
+	case *ast.ImportStmt:
+		return i.execImportStmt(e)
+	case *ast.FromImportStmt:
+		return i.execFromImportStmt(e)
 	case *ast.IfStmt:
 		return i.execIfStmt(e)
 	case *ast.ForStmt:

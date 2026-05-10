@@ -1,0 +1,5 @@
+# مُكتبة package initializer (Arabic-named package)
+من . استورد فرعية
+قيمة_الحزمة = 100
+
+# re-export الفرعية module as مكتبة.فرعية

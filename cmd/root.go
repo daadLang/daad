@@ -93,6 +93,7 @@ func runInterpreter(filePath string) {
 	module := p.Parse()
 
 	i := interpreter.NewInterpreter()
+	i.SetSourcePath(filePath)
 	i.Run(&module)
 
 }

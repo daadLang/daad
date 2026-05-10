@@ -22,34 +22,34 @@ var formatters = map[string]string{
 // RegisterBuiltins adds all builtin functions to the environment
 func RegisterBuiltins(env *Env) {
 	// i/o functions
-	env.Set("اطبع", &BuiltinValue{Name: "اطبع", Fn: builtinPrint, Variadic: true})
-	env.Set("ادخل", &BuiltinValue{Name: "ادخل", Fn: builtinInput, Variadic: true})
+	env.SetBuiltin("اطبع", &BuiltinValue{Name: "اطبع", Fn: builtinPrint, Variadic: true})
+	env.SetBuiltin("ادخل", &BuiltinValue{Name: "ادخل", Fn: builtinInput, Variadic: true})
 
 	// formatting functions
-	env.Set("نسق", &BuiltinValue{Name: "نسق", Fn: builtinFormat, Variadic: true})
+	env.SetBuiltin("نسق", &BuiltinValue{Name: "نسق", Fn: builtinFormat, Variadic: true})
 
 	// array options
-	env.Set("طول", &BuiltinValue{Name: "طول", Fn: builtinLen, Variadic: false})
+	env.SetBuiltin("طول", &BuiltinValue{Name: "طول", Fn: builtinLen, Variadic: false})
 
 	// list manipulation builtins
 	// English: append
-	env.Set("اضف", &BuiltinValue{Name: "اضف", Fn: builtinAppend, Variadic: false})
+	env.SetBuiltin("اضف", &BuiltinValue{Name: "اضف", Fn: builtinAppend, Variadic: false})
 	// English: push
-	env.Set("ادفع", &BuiltinValue{Name: "ادفع", Fn: builtinPush, Variadic: false})
+	env.SetBuiltin("ادفع", &BuiltinValue{Name: "ادفع", Fn: builtinPush, Variadic: false})
 	// English: pop
-	env.Set("ازل", &BuiltinValue{Name: "ازل", Fn: builtinPop, Variadic: false})
+	env.SetBuiltin("ازل", &BuiltinValue{Name: "ازل", Fn: builtinPop, Variadic: false})
 	// English: copy
-	env.Set("انسخ", &BuiltinValue{Name: "انسخ", Fn: builtinCopy, Variadic: false})
+	env.SetBuiltin("انسخ", &BuiltinValue{Name: "انسخ", Fn: builtinCopy, Variadic: false})
 	// English: clear
-	env.Set("افرغ", &BuiltinValue{Name: "افرغ", Fn: builtinClear, Variadic: false})
+	env.SetBuiltin("افرغ", &BuiltinValue{Name: "افرغ", Fn: builtinClear, Variadic: false})
 
 	// type conversion functions
-	env.Set("نوع", &BuiltinValue{Name: "نوع", Fn: builtinType, Variadic: false})
+	env.SetBuiltin("نوع", &BuiltinValue{Name: "نوع", Fn: builtinType, Variadic: false})
 
-	env.Set("نطاق", &BuiltinValue{Name: "نطاق", Fn: builtinRange, Variadic: true})
-	env.Set("صحيح", &BuiltinValue{Name: "صحيح", Fn: builtinInt, Variadic: false})
-	env.Set("عشري", &BuiltinValue{Name: "عشري", Fn: builtinFloat, Variadic: false})
-	env.Set("نص", &BuiltinValue{Name: "نص", Fn: builtinStr, Variadic: false})
+	env.SetBuiltin("نطاق", &BuiltinValue{Name: "نطاق", Fn: builtinRange, Variadic: true})
+	env.SetBuiltin("صحيح", &BuiltinValue{Name: "صحيح", Fn: builtinInt, Variadic: false})
+	env.SetBuiltin("عشري", &BuiltinValue{Name: "عشري", Fn: builtinFloat, Variadic: false})
+	env.SetBuiltin("نص", &BuiltinValue{Name: "نص", Fn: builtinStr, Variadic: false})
 }
 
 // Print function: اطبع

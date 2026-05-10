@@ -1,0 +1,3 @@
+# أدوات package initializer using .ض extension
+دالة نفذ():
+    اطبع("أدوات: نفّذ() تم الاستدعاء")
