@@ -12,10 +12,34 @@ import (
 
 func (i *Interpreter) execImportStmt(stmt *ast.ImportStmt) Signal {
 	for _, alias := range stmt.Names {
-		module := i.loadModule(alias.Name, 0)
+		moduleName := alias.Name
 
-		targetName := importBindingName(alias)
-		i.env.Set(targetName, module)
+		// Check if this is a dotted import (e.g., "a.c.d")
+		if strings.Contains(moduleName, ".") {
+			parts := strings.Split(moduleName, ".")
+			// Load root and chain all parts
+			rootModule := i.loadModule(parts[0], 0)
+
+			// Load and chain each nested module
+			currentModule := rootModule
+			fullPath := parts[0]
+			for j := 1; j < len(parts); j++ {
+				fullPath = fullPath + "." + parts[j]
+				nextModule := i.loadModule(fullPath, 0)
+				// Set the next module as an attribute on current
+				currentModule.Attributes[parts[j]] = nextModule
+				currentModule = nextModule
+			}
+
+			// Bind only the root to environment
+			targetName := importBindingName(alias)
+			i.env.Set(targetName, rootModule)
+		} else {
+			// Simple name, load normally
+			module := i.loadModule(moduleName, 0)
+			targetName := importBindingName(alias)
+			i.env.Set(targetName, module)
+		}
 	}
 
 	return NewNoSignal()
@@ -48,19 +72,70 @@ func (i *Interpreter) execFromImportStmt(stmt *ast.FromImportStmt) Signal {
 			continue
 		}
 
-		value, ok := module.Attributes[imported.Name]
-		if !ok {
-			panic(newRuntimeError("module '%s' has no exported name '%s'", stmt.Module, imported.Name))
+		// Handle dotted names (e.g., "a.b")
+		var value Value
+		if strings.Contains(imported.Name, ".") {
+			value = i.traverseDottedName(module, imported.Name, stmt.Module)
+		} else {
+			v, ok := module.Attributes[imported.Name]
+			if !ok {
+				panic(newRuntimeError("module '%s' has no exported name '%s'", stmt.Module, imported.Name))
+			}
+			value = v
 		}
 
 		targetName := imported.Name
 		if imported.AsName != nil {
 			targetName = *imported.AsName
+		} else if strings.Contains(imported.Name, ".") {
+			// For dotted names without alias, bind the final part (e.g., "a.b" → "b")
+			parts := strings.Split(imported.Name, ".")
+			targetName = parts[len(parts)-1]
 		}
+
 		i.env.Set(targetName, value)
 	}
 
 	return NewNoSignal()
+}
+
+func (i *Interpreter) traverseDottedName(module *ModuleValue, dottedName string, rootModuleName string) Value {
+	if !strings.Contains(dottedName, ".") {
+		value, ok := module.Attributes[dottedName]
+		if !ok {
+			panic(newRuntimeError("module '%s' has no exported name '%s'", rootModuleName, dottedName))
+		}
+		return value
+	}
+
+	// Dotted name: traverse the chain
+	parts := strings.Split(dottedName, ".")
+	current := module
+
+	for idx, part := range parts {
+		if part == "" {
+			panic(newRuntimeError("invalid dotted name '%s'", dottedName))
+		}
+
+		value, ok := current.Attributes[part]
+		if !ok {
+			panic(newRuntimeError("module '%s' has no exported name '%s'", rootModuleName, strings.Join(parts[:idx+1], ".")))
+		}
+
+		if idx == len(parts)-1 {
+			// Last part: return the value
+			return value
+		}
+
+		// Intermediate part: should be a module
+		modVal, ok := value.(*ModuleValue)
+		if !ok {
+			panic(newRuntimeError("'%s' in dotted import is not a module", strings.Join(parts[:idx+1], ".")))
+		}
+		current = modVal
+	}
+
+	panic(newRuntimeError("invalid dotted name traversal for '%s'", dottedName))
 }
 
 func importBindingName(alias ast.Alias) string {

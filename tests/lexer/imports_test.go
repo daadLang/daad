@@ -46,7 +46,7 @@ func TestTokenizeImportsFixture(t *testing.T) {
 		t.Fatalf("expected 2 MULT tokens for star imports, got %d", countTokens(tokens, lexer.MULT))
 	}
 
-	if countTokens(tokens, lexer.DOT) != 11 {
-		t.Fatalf("expected 11 DOT tokens for dotted and relative imports, got %d", countTokens(tokens, lexer.DOT))
+	if countTokens(tokens, lexer.DOT) != 10 {
+		t.Fatalf("expected 10 DOT tokens for dotted and relative imports, got %d", countTokens(tokens, lexer.DOT))
 	}
 }

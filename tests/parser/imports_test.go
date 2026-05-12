@@ -80,35 +80,35 @@ func TestParseImportsFixture(t *testing.T) {
 		assertAlias(t, stmt.Names[0], "مكتبة.فرعية", &alias)
 	}
 
-	// 3) استورد مكتبة.فرعية, أخرى.حزمة ك حزمة
+	// 3) استورد مكتبة.فرعية, مكتبة ك مع_حزمة
 	if stmt, ok := module.Body[2].(*ast.ImportStmt); !ok {
 		t.Fatalf("statement 2: expected *ast.ImportStmt, got %T", module.Body[2])
 	} else {
-		alias := "حزمة"
+		alias := "مع_حزمة"
 		if len(stmt.Names) != 2 {
 			t.Fatalf("statement 2: expected 2 imported names, got %d", len(stmt.Names))
 		}
 		assertAlias(t, stmt.Names[0], "مكتبة.فرعية", nil)
-		assertAlias(t, stmt.Names[1], "أخرى.حزمة", &alias)
+		assertAlias(t, stmt.Names[1], "مكتبة", &alias)
 	}
 
-	// 4) استورد أداة كـ أداة_بديلة
+	// 4) استورد أدوات باسم الأدوات
 	if stmt, ok := module.Body[3].(*ast.ImportStmt); !ok {
 		t.Fatalf("statement 3: expected *ast.ImportStmt, got %T", module.Body[3])
 	} else {
-		alias := "أداة_بديلة"
+		alias := "الأدوات"
 		if len(stmt.Names) != 1 {
 			t.Fatalf("statement 3: expected 1 imported name, got %d", len(stmt.Names))
 		}
-		assertAlias(t, stmt.Names[0], "أداة", &alias)
+		assertAlias(t, stmt.Names[0], "أدوات", &alias)
 	}
 
-	// 5) من حزمة استورد اسم
+	// 5) من مكتبة استورد قيمة_الحزمة
 	if stmt, ok := module.Body[4].(*ast.FromImportStmt); !ok {
 		t.Fatalf("statement 4: expected *ast.FromImportStmt, got %T", module.Body[4])
 	} else {
-		if stmt.Module != "حزمة" {
-			t.Fatalf("statement 4: expected module %q, got %q", "حزمة", stmt.Module)
+		if stmt.Module != "مكتبة" {
+			t.Fatalf("statement 4: expected module %q, got %q", "مكتبة", stmt.Module)
 		}
 		if stmt.Level != 0 {
 			t.Fatalf("statement 4: expected level 0, got %d", stmt.Level)
@@ -116,30 +116,30 @@ func TestParseImportsFixture(t *testing.T) {
 		if len(stmt.Names) != 1 {
 			t.Fatalf("statement 4: expected 1 imported name, got %d", len(stmt.Names))
 		}
-		assertAlias(t, stmt.Names[0], "اسم", nil)
+		assertAlias(t, stmt.Names[0], "قيمة_الحزمة", nil)
 	}
 
-	// 6) من حزمة استورد اسم باسم alias, ثاني
+	// 6) من مكتبة استورد قيمة_الحزمة باسم القيمة, فرعية
 	if stmt, ok := module.Body[5].(*ast.FromImportStmt); !ok {
 		t.Fatalf("statement 5: expected *ast.FromImportStmt, got %T", module.Body[5])
 	} else {
-		alias := "اسم_بديل"
-		if stmt.Module != "حزمة" {
-			t.Fatalf("statement 5: expected module %q, got %q", "حزمة", stmt.Module)
+		alias := "القيمة"
+		if stmt.Module != "مكتبة" {
+			t.Fatalf("statement 5: expected module %q, got %q", "مكتبة", stmt.Module)
 		}
 		if len(stmt.Names) != 2 {
 			t.Fatalf("statement 5: expected 2 imported names, got %d", len(stmt.Names))
 		}
-		assertAlias(t, stmt.Names[0], "اسم", &alias)
-		assertAlias(t, stmt.Names[1], "ثاني", nil)
+		assertAlias(t, stmt.Names[0], "قيمة_الحزمة", &alias)
+		assertAlias(t, stmt.Names[1], "فرعية", nil)
 	}
 
-	// 7) من حزمة.فرعية استورد *
+	// 7) من مكتبة.فرعية استورد *
 	if stmt, ok := module.Body[6].(*ast.FromImportStmt); !ok {
 		t.Fatalf("statement 6: expected *ast.FromImportStmt, got %T", module.Body[6])
 	} else {
-		if stmt.Module != "حزمة.فرعية" {
-			t.Fatalf("statement 6: expected module %q, got %q", "حزمة.فرعية", stmt.Module)
+		if stmt.Module != "مكتبة.فرعية" {
+			t.Fatalf("statement 6: expected module %q, got %q", "مكتبة.فرعية", stmt.Module)
 		}
 		if stmt.Level != 0 {
 			t.Fatalf("statement 6: expected level 0, got %d", stmt.Level)
@@ -182,7 +182,7 @@ func TestParseImportsFixture(t *testing.T) {
 		assertAlias(t, stmt.Names[0], "*", nil)
 	}
 
-	// 10) من .. استورد أعلى
+	// 10) من .. استورد اسم
 	if stmt, ok := module.Body[9].(*ast.FromImportStmt); !ok {
 		t.Fatalf("statement 9: expected *ast.FromImportStmt, got %T", module.Body[9])
 	} else {
@@ -195,16 +195,16 @@ func TestParseImportsFixture(t *testing.T) {
 		if len(stmt.Names) != 1 {
 			t.Fatalf("statement 9: expected 1 imported name, got %d", len(stmt.Names))
 		}
-		assertAlias(t, stmt.Names[0], "أعلى", nil)
+		assertAlias(t, stmt.Names[0], "اسم", nil)
 	}
 
-	// 11) من ..حزمة.فرعية استورد اسم2 باسم اسم_مستعار
+	// 11) من ..مكتبة.فرعية استورد جمع باسم جمع_بديل
 	if stmt, ok := module.Body[10].(*ast.FromImportStmt); !ok {
 		t.Fatalf("statement 10: expected *ast.FromImportStmt, got %T", module.Body[10])
 	} else {
-		alias := "اسم_مستعار"
-		if stmt.Module != "حزمة.فرعية" {
-			t.Fatalf("statement 10: expected module %q, got %q", "حزمة.فرعية", stmt.Module)
+		alias := "جمع_بديل"
+		if stmt.Module != "مكتبة.فرعية" {
+			t.Fatalf("statement 10: expected module %q, got %q", "مكتبة.فرعية", stmt.Module)
 		}
 		if stmt.Level != 2 {
 			t.Fatalf("statement 10: expected level 2, got %d", stmt.Level)
@@ -212,6 +212,6 @@ func TestParseImportsFixture(t *testing.T) {
 		if len(stmt.Names) != 1 {
 			t.Fatalf("statement 10: expected 1 imported name, got %d", len(stmt.Names))
 		}
-		assertAlias(t, stmt.Names[0], "اسم2", &alias)
+		assertAlias(t, stmt.Names[0], "جمع", &alias)
 	}
 }

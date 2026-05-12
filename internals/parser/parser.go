@@ -428,6 +428,16 @@ func (p *Parser) parseFunctionDef() *ast.FunctionDefStmt {
 	}
 
 	p.expectAndAdvance(lexer.RPAREN)
+
+	// Skip optional return type annotation: -> TypeName
+	if p.peek().Type == lexer.RETTYPE {
+		p.advance() // consume ->
+		// Skip the return type name (could be simple name or dotted)
+		for p.peek().Type == lexer.NAME || p.peek().Type == lexer.DOT {
+			p.advance()
+		}
+	}
+
 	p.expectAndAdvance(lexer.COLON)
 	body := p.parseSuite()
 

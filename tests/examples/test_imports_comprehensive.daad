@@ -1,0 +1,26 @@
+# Test 1: Simple import
+استورد مكتبة
+اطبع("Test 1 - Simple import:")
+اطبع(مكتبة.قيمة_الحزمة)
+
+# Test 2: Nested import
+استورد أدوات.متقدم.أداة_خاصة
+اطبع("Test 2 - Nested import (chain accessible):")
+اطبع(أدوات.متقدم.أداة_خاصة.احسب(2, 3))
+
+# Test 3: Both simple and nested coexist
+استورد أدوات
+اطبع("Test 3 - Both imports coexist:")
+أدوات.نفذ()
+
+# Test 4: From-import simple name
+من مكتبة استورد فرعية
+اطبع("Test 4 - From-import:")
+اطبع(فرعية.جمع(10, 20))
+
+# Test 5: From-import with dotted name
+من أدوات استورد متقدم.أداة_خاصة
+اطبع("Test 5 - From-import with dotted name:")
+اطبع(أداة_خاصة.احسب(7, 5))
+
+اطبع("All import tests passed!")
