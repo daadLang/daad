@@ -65,17 +65,17 @@ func expectString(arg Value, name string) (string, error) {
 
 func newMathModule() *ModuleValue {
 	exports := map[string]Value{
-		"باي":     FloatValue{V: math.Pi},
-		"هـ":      FloatValue{V: math.E},
-		"مطلق":   builtin("مطلق", mathAbs, false),
-		"جذر":    builtin("جذر", mathSqrt, false),
-		"جيب":    builtin("جيب", mathSin, false),
+		"باي":      FloatValue{V: math.Pi},
+		"هـ":       FloatValue{V: math.E},
+		"مطلق":     builtin("مطلق", mathAbs, false),
+		"جذر":      builtin("جذر", mathSqrt, false),
+		"جيب":      builtin("جيب", mathSin, false),
 		"جيب_تمام": builtin("جيب_تمام", mathCos, false),
-		"ظل":     builtin("ظل", mathTan, false),
-		"أس":     builtin("أس", mathPow, false),
-		"أرض":    builtin("أرض", mathFloor, false),
-		"سقف":    builtin("سقف", mathCeil, false),
-		"تقريب":  builtin("تقريب", mathRound, false),
+		"ظل":       builtin("ظل", mathTan, false),
+		"أس":       builtin("أس", mathPow, false),
+		"أرض":      builtin("أرض", mathFloor, false),
+		"سقف":      builtin("سقف", mathCeil, false),
+		"تقريب":    builtin("تقريب", mathRound, false),
 	}
 	return newNativeModule("رياضيات", exports)
 }
@@ -335,7 +335,7 @@ func newOSModule() *ModuleValue {
 		"موجود":                  builtin("موجود", osExists, false),
 		"هل_ملف":                 builtin("هل_ملف", osIsFile, false),
 		"هل_مجلد":                builtin("هل_مجلد", osIsDir, false),
-		"قائمة_المحتويات":         builtin("قائمة_المحتويات", osListDir, false),
+		"قائمة_المحتويات":        builtin("قائمة_المحتويات", osListDir, false),
 		"احذف":                   builtin("احذف", osRemove, false),
 		"انشئ_مجلد":              builtin("انشئ_مجلد", osMkdir, false),
 	}

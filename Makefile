@@ -1,4 +1,4 @@
-.PHONY: all build build-en build-ar test clean install help
+.PHONY: all build build-en build-ar test clean install help lint
 
 # Binary names
 BINARY_EN=daad
@@ -92,7 +92,7 @@ fmt:
 # Run linter (requires golangci-lint)
 lint:
 	@echo "Running linter..."
-	golangci-lint run ./...
+	golangci-lint run ./... --fix
 	@echo "✓ Linting complete"
 
 # Run the English binary

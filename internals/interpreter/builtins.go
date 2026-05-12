@@ -561,7 +561,11 @@ func builtinInput(args []Value, kwargs map[string]Value) (Value, error) {
 	}
 
 	var input string
-	fmt.Scanln(&input)
+	_, err := fmt.Scanln(&input)
+
+	if err != nil {
+		return nil, fmt.Errorf("خطأ في قراءة الإدخال")
+	}
 
 	return StringValue{V: input}, nil
 }

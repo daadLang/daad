@@ -151,14 +151,15 @@ func (l *Lexer) handleSpaces() (Token, int) {
 		} else {
 			for {
 				peek := l.peek()
-				if peek == ' ' || peek == '\t' {
+				switch peek {
+				case ' ', '\t':
 					l.advance()
-				} else if peek == '\n' || peek == '\r' {
+				case '\n', '\r':
 					l.isNewLine = true
 					l.advance()
 					return Token{Type: NEWLINE, Value: "\n"}, 1
-				} else {
-					break
+				default:
+					return Token{}, 0
 				}
 			}
 		}

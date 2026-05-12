@@ -50,13 +50,13 @@ func (p *Parser) advance() lexer.Token {
 	return token
 }
 
-func (p *Parser) expect(tokenType lexer.TokenType) bool {
-	token := p.peek()
-	if token.Type != tokenType {
-		return false
-	}
-	return true
-}
+// func (p *Parser) expect(tokenType lexer.TokenType) bool {
+// 	token := p.peek()
+// 	if token.Type != tokenType {
+// 		return false
+// 	}
+// 	return true
+// }
 
 func (p *Parser) Parse() ast.Module {
 	for p.Pos < len(p.Tokens) {
@@ -140,10 +140,7 @@ func (p *Parser) parseFromImportStmt() *ast.FromImportStmt {
 	// Parse imported names
 	var names []ast.Alias
 
-	for {
-		if p.peek().Type != lexer.NAME && p.peek().Type != lexer.MULT {
-			break
-		}
+	for p.peek().Type == lexer.NAME || p.peek().Type == lexer.MULT {
 
 		if p.peek().Type == lexer.MULT {
 			p.advance()
@@ -482,7 +479,8 @@ func (p *Parser) parseSuite() []ast.Stmt {
 
 func (p *Parser) expectAndAdvance(tokenType lexer.TokenType) lexer.Token {
 	if p.peek().Type != tokenType {
-		// For now, just advance anyway - could add error handling
+		// For now, just advance anyway
+		// TODO: add error handling
 	}
 	return p.advance()
 }
