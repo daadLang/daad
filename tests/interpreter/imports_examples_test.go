@@ -44,6 +44,22 @@ func TestImportMoreExamplesRun(t *testing.T) {
 	}
 }
 
+func TestNativeModulesExampleRun(t *testing.T) {
+	mainFile := examplePath(t, "native_modules.daad")
+	interp := runDaadFile(t, mainFile)
+
+	if got := rawValueForImportTests(interp.GetVar("قيمة_مطلقة")); got != 3 {
+		t.Fatalf("expected قيمة_مطلقة to be 3, got %v", got)
+	}
+	if got := rawValueForImportTests(interp.GetVar("اسم")); got != "c.txt" {
+		t.Fatalf("expected اسم to be c.txt, got %v", got)
+	}
+	value, ok := rawValueForImportTests(interp.GetVar("قيمة_عشوائية")).(int)
+	if !ok || value < 1 || value > 10 {
+		t.Fatalf("expected قيمة_عشوائية to be within 1..10, got %v", value)
+	}
+}
+
 func TestMixedFromImportAndNestedImport(t *testing.T) {
 	tmp := t.TempDir()
 

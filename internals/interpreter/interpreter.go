@@ -13,6 +13,7 @@ type Interpreter struct {
 	loadingModules map[string]bool // detect circular imports
 	sourceDir      string
 	currentDir     string
+	nativeModules  map[string]NativeModuleLoader
 }
 
 func NewInterpreter() *Interpreter {
@@ -30,7 +31,15 @@ func NewInterpreter() *Interpreter {
 		loadingModules: make(map[string]bool),
 		sourceDir:      cwd,
 		currentDir:     cwd,
+		nativeModules:  defaultNativeModules(),
 	}
+}
+
+func (i *Interpreter) RegisterNativeModule(name string, loader NativeModuleLoader) {
+	if i.nativeModules == nil {
+		i.nativeModules = make(map[string]NativeModuleLoader)
+	}
+	i.nativeModules[name] = loader
 }
 
 func (i *Interpreter) SetSourcePath(filePath string) {

@@ -151,6 +151,37 @@ func importBindingName(alias ast.Alias) string {
 }
 
 func (i *Interpreter) loadModule(moduleName string, level int) *ModuleValue {
+	if level == 0 && !strings.Contains(moduleName, ".") {
+		if loader, ok := i.nativeModules[moduleName]; ok {
+			cacheKey := "native:" + moduleName
+			if cached, ok := i.moduleCache[cacheKey]; ok {
+				return cached
+			}
+			if i.loadingModules[cacheKey] {
+				panic(newRuntimeError("circular import detected for module '%s'", moduleName))
+			}
+			i.loadingModules[cacheKey] = true
+			defer delete(i.loadingModules, cacheKey)
+
+			module := loader()
+			if module == nil {
+				panic(newRuntimeError("native module '%s' returned nil", moduleName))
+			}
+			if module.Name == "" {
+				module.Name = moduleName
+			}
+			if module.Path == "" {
+				module.Path = cacheKey
+			}
+			if module.Attributes == nil {
+				module.Attributes = make(map[string]Value)
+			}
+
+			i.moduleCache[cacheKey] = module
+			return module
+		}
+	}
+
 	modulePath := i.resolveModulePath(moduleName, level)
 
 	if cached, ok := i.moduleCache[modulePath]; ok {
