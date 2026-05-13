@@ -221,6 +221,8 @@ daad ast ملفي.daad
 
 نرحب بمساهماتكم! سواء كانت إصلاح أخطاء، إضافة ميزات جديدة، أو تحسين التوثيق. لا تتردد في فتح   (Pull Request) أو الإبلاغ عن مشكلة (Issue).
 
+This repository follows [Conventional Commits](https://www.conventionalcommits.org/), so please write commit messages in English. Pre-commit will reject simple messages. Examples: `fix(interpreter): correct XXX bug`, `feat: add a feature`, `feat(cli): add a new command`, `docs: update the documentation`.
+
 ## الرخصة
 
 هذا المشروع مرخص بموجب رخصة Apache-2.0 - راجع ملف [LICENSE](LICENSE) للتفاصيل.

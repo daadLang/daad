@@ -1,3 +1,4 @@
 gi_*
 bin/
 .vscode/
+node_modules/
