@@ -1,4 +1,4 @@
-# 1.0.0 (2026-05-13)
+# 0.2.0 (2026-05-13)
 
 
 ### Bug Fixes
@@ -15,3 +15,31 @@
 * **interpreter:** add some native modules support (os, random,math,time,path) ([355a15e](https://github.com/daadLang/daad/commit/355a15e7547a36c53067d9eed2f56eeeb7149b41))
 * **interpreter:** empliment simple import & FromImport ([3265589](https://github.com/daadLang/daad/commit/3265589708bd1d3be487b981b1d55b7a8b93ff74))
 * **parser:** add import & importFrom ([f238356](https://github.com/daadLang/daad/commit/f238356e00d90a0eeaf68fd10d86445bc0c68093))
+
+---
+
+# 0.1.0 (2026-05-06)
+
+### Features
+
+* **interpreter:** add basic object-oriented programming support
+* **interpreter:** add class definitions, attribute assignments, method calls, and single inheritance
+* **docs:** add OOP internals documentation and related examples
+* **examples:** add class instantiation and inheritance examples
+
+### Internal
+
+* expand interpreter and AST to support class-based execution
+
+---
+
+# 0.0.0 (2026-02-01)
+
+### Features
+
+* **runtime:** initialize Daad language runtime foundation
+* **lexer:** add indentation-aware tokenization
+* **parser:** implement recursive-descent parser and AST structure
+* **interpreter:** add variables, expressions, functions, collections, and control flow support
+* **stdlib:** add initial built-in operations and standard behavior
+* **docs:** add project documentation, examples, and test suite
