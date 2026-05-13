@@ -4,6 +4,12 @@ on:
   push:
     branches:
       - main
+    paths:
+      - "cmd/**"
+      - "internal/**"
+      - "go.mod"
+      - "go.sum"
+      - ".goreleaser.yaml"
 
 permissions:
   contents: write
