@@ -1,31 +1,53 @@
-name: Release
+name: release
 
 on:
   push:
-    tags:
-      - 'v*.*.*'
+    branches:
+      - main
 
 permissions:
   contents: write
-  packages: write
+  issues: write
+  pull-requests: write
 
 jobs:
-  goreleaser:
+  release:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Go
-        uses: actions/setup-go@v4
+      # 1. Checkout full history (required for both tools)
+      - uses: actions/checkout@v4
         with:
-          go-version: '1.25'
+          fetch-depth: 0
 
-
-      - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v5
+      # 2. Setup Node (semantic-release)
+      - uses: actions/setup-node@v4
         with:
-          distribution: goreleaser
+          node-version: 24
+
+      # 3. Setup Go (GoReleaser)
+      - uses: actions/setup-go@v5
+        with:
+          go-version: 1.22
+
+      # 4. Install JS deps
+      - run: npm install
+
+      # 5. Run semantic-release (creates tag + changelog + GitHub release metadata)
+      - name: Semantic Release
+        run: npx semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Sync repository state
+        run: |
+          git fetch --tags origin
+          git pull origin main
+
+      # 6. Run GoReleaser AFTER semantic-release
+      - name: GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
           version: latest
           args: release --clean
         env:
