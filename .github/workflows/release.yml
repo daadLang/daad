@@ -1,6 +1,6 @@
 name: release
-
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
@@ -10,48 +10,69 @@ on:
       - "go.mod"
       - "go.sum"
       - ".goreleaser.yaml"
-
+      - "main.go"
 permissions:
   contents: write
   issues: write
   pull-requests: write
-
 jobs:
   release:
     runs-on: ubuntu-latest
-
     steps:
-      # 1. Checkout full history (required for both tools)
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      # 2. Setup Node (semantic-release)
       - uses: actions/setup-node@v4
         with:
           node-version: 24
 
-      # 3. Setup Go (GoReleaser)
       - uses: actions/setup-go@v5
         with:
           go-version: 1.22
 
-      # 4. Install JS deps
       - run: npm install
 
-      # 5. Run semantic-release (creates tag + changelog + GitHub release metadata)
       - name: Semantic Release
-        run: npx semantic-release
+        id: semantic
+        run: |
+          BEFORE=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+
+          npx semantic-release
+
+          git fetch --tags
+
+          AFTER=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          
+          echo "BEFORE: $BEFORE"
+          echo "AFTER: $AFTER"
+
+          if [ "$BEFORE" != "$AFTER" ]; then
+            echo "new_release_published=true" >> $GITHUB_OUTPUT
+            echo "new_release_version=${AFTER#v}" >> $GITHUB_OUTPUT
+            echo "new_release_git_head=$(git rev-list -n 1 $AFTER)" >> $GITHUB_OUTPUT
+          else
+            echo "new_release_published=false" >> $GITHUB_OUTPUT
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Sync repository state
+      - name: Debug semantic-release outputs
         run: |
-          git fetch --tags origin
-          git pull origin main
+          echo "new_release_published: ${{ steps.semantic.outputs.new_release_published }}"
+          echo "new_release_version: ${{ steps.semantic.outputs.new_release_version }}"
+          echo "new_release_git_head: ${{ steps.semantic.outputs.new_release_git_head }}"
 
-      # 6. Run GoReleaser AFTER semantic-release
+      - name: Fetch new tags
+        if: steps.semantic.outputs.new_release_published == 'true'   # <-- skip if no release
+        run: git fetch --tags origin
+
+      - name: Check out the release commit  # <-- moves HEAD to the tagged commit
+        if: steps.semantic.outputs.new_release_published == 'true'
+        run: git checkout ${{ steps.semantic.outputs.new_release_git_head }}
+
       - name: GoReleaser
+        if: steps.semantic.outputs.new_release_published == 'true'   # <-- skip if no release
         uses: goreleaser/goreleaser-action@v6
         with:
           version: latest
