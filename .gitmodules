@@ -1,0 +1,3 @@
+[submodule "d-editor"]
+	path = d-editor
+	url = https://github.com/daadLang/d-editor
