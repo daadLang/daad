@@ -47,9 +47,10 @@ func RegisterBuiltins(env *Env) {
 	env.SetBuiltin("نوع", &BuiltinValue{Name: "نوع", Fn: builtinType, Variadic: false})
 
 	env.SetBuiltin("نطاق", &BuiltinValue{Name: "نطاق", Fn: builtinRange, Variadic: true})
-	env.SetBuiltin("صحيح", &BuiltinValue{Name: "صحيح", Fn: builtinInt, Variadic: false})
+	env.SetBuiltin("عدد", &BuiltinValue{Name: "عدد", Fn: builtinInt, Variadic: false})
 	env.SetBuiltin("عشري", &BuiltinValue{Name: "عشري", Fn: builtinFloat, Variadic: false})
 	env.SetBuiltin("نص", &BuiltinValue{Name: "نص", Fn: builtinStr, Variadic: false})
+	env.SetBuiltin("منطقي", &BuiltinValue{Name: "منطقي", Fn: builtinBool, Variadic: false})
 }
 
 // Print function: اطبع
@@ -552,6 +553,31 @@ func builtinStr(args []Value, kwargs map[string]Value) (Value, error) {
 	}
 
 	return StringValue{V: valueToString(args[0])}, nil
+}
+
+func builtinBool(args []Value, kwargs map[string]Value) (Value, error) {
+	if len(args) != 1 {
+		return nil, fmt.Errorf("منطقي() تتطلب بالضبط معامل واحد (%d معطى)", len(args))
+	}
+
+	switch v := args[0].(type) {
+	case BoolValue:
+		return v, nil
+	case IntValue:
+		return BoolValue{V: v.V != 0}, nil
+	case FloatValue:
+		return BoolValue{V: v.V != 0.0}, nil
+	case StringValue:
+		trimmed := strings.TrimSpace(strings.ToLower(v.V))
+		if trimmed == "صحيح" || trimmed == "true" || trimmed == "1" {
+			return BoolValue{V: true}, nil
+		} else if trimmed == "خطأ" || trimmed == "false" || trimmed == "0" {
+			return BoolValue{V: false}, nil
+		}
+		return nil, fmt.Errorf("منطقي() لا يمكن تحويل '%s' إلى منطقي", v.V)
+	default:
+		return nil, fmt.Errorf("منطقي() لا يمكن تحويل %T إلى منطقي", args[0])
+	}
 }
 
 func builtinInput(args []Value, kwargs map[string]Value) (Value, error) {
