@@ -1,4 +1,4 @@
-name: release
+name: test-and-release
 on:
   workflow_dispatch:
   push:
@@ -11,27 +11,56 @@ on:
       - "go.sum"
       - ".goreleaser.yaml"
       - "main.go"
+
 permissions:
   contents: write
   issues: write
   pull-requests: write
+
 jobs:
-  release:
-    runs-on: ubuntu-latest
+  test:
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-go@v6
+        with:
+          go-version: "1.25"   # keep in sync with go.mod
+          cache: true
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Unit tests
+        run: go test -race -count=1 ./...
+
+      - name: Validate release config (snapshot)
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          version: latest
+          args: release --snapshot --clean
+
+  release:
+    needs: test
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.TOKEN }}   # PAT/App token that can bypass the ruleset
+
+      - uses: actions/setup-node@v5
         with:
           node-version: 24
 
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         with:
-          go-version: 1.22
+          go-version: "1.25"
+          cache: true
 
-      - run: npm install
+      - run: npm ci || npm install
 
       - name: Semantic Release
         id: semantic
@@ -41,9 +70,8 @@ jobs:
           npx semantic-release
 
           git fetch --tags
-
           AFTER=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-          
+
           echo "BEFORE: $BEFORE"
           echo "AFTER: $AFTER"
 
@@ -55,24 +83,18 @@ jobs:
             echo "new_release_published=false" >> $GITHUB_OUTPUT
           fi
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Debug semantic-release outputs
-        run: |
-          echo "new_release_published: ${{ steps.semantic.outputs.new_release_published }}"
-          echo "new_release_version: ${{ steps.semantic.outputs.new_release_version }}"
-          echo "new_release_git_head: ${{ steps.semantic.outputs.new_release_git_head }}"
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}   # used by @semantic-release/git to push
 
       - name: Fetch new tags
-        if: steps.semantic.outputs.new_release_published == 'true'   # <-- skip if no release
+        if: steps.semantic.outputs.new_release_published == 'true'
         run: git fetch --tags origin
 
-      - name: Check out the release commit  # <-- moves HEAD to the tagged commit
+      - name: Check out the release commit
         if: steps.semantic.outputs.new_release_published == 'true'
         run: git checkout ${{ steps.semantic.outputs.new_release_git_head }}
 
       - name: GoReleaser
-        if: steps.semantic.outputs.new_release_published == 'true'   # <-- skip if no release
+        if: steps.semantic.outputs.new_release_published == 'true'
         uses: goreleaser/goreleaser-action@v6
         with:
           version: latest
