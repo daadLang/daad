@@ -1,3 +1,18 @@
+## [0.2.1](https://github.com/daadLang/daad/compare/v0.2.0...v0.2.1) (2026-10-19)
+
+### Bug Fixes
+
+* rename 'صحيح' to 'عدد' and add 'منطقي' built-in function ([74de58c](https://github.com/daadLang/daad/commit/74de58cfefd478ed557688da76e830ed2e1d32ac))
+
+### CI/CD
+
+* update release pipline ([f822f2c](https://github.com/daadLang/daad/commit/f822f2ceca5df0745ca7507b7675e5e34dfde4ea))
+
+### Internal
+
+* add editor repo ([d004d5a](https://github.com/daadLang/daad/commit/d004d5a979f6c5141f89b98f5fba2fe6e6feb804))
+* sync d-editor repo ([9cd9864](https://github.com/daadLang/daad/commit/9cd98641b5bee51ddd18ae80e126aa83ae7590c8))
+
 # 0.2.0 (2026-05-13)
 
 
